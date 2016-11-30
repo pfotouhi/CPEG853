@@ -27,8 +27,23 @@
 # Authors: Gabe Black
 
 from m5.SimObject import SimObject
+from m5.params import *
+from Encoding import *
+
+
 
 class BaseTLB(SimObject):
     type = 'BaseTLB'
     abstract = True
+    tlb_tag_flag = Param.Int(0, "tlb tag flag")
+    tlb_tag_faultType = Param.Int(0, "tlb tag faultType")
+    tlb_tag_faultRate = Param.Float(0.0, "tlb tag faultRate")
+    tlb_state_flag = Param.Int(0, "tlb state flag")
+    tlb_state_faultType = Param.Int(0, "tlb state faultType")
+    tlb_state_faultRate = Param.Float(0.0, "tlb state faultRate")
+    tlb_data_flag = Param.Int(0, "tlb data flag")
+    tlb_data_faultType = Param.Int(0, "tlb data faultType")
+    tlb_data_faultRate = Param.Float(0.0, "tlb data faultRate")
+    encoder = Param.Encoder(DefaultEncoder(), "Encoder Unit")
+
     cxx_header = "arch/generic/tlb.hh"

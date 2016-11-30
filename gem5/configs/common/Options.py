@@ -48,7 +48,7 @@ import MemConfig
 import PlatformConfig
 
 from FSConfig import os_types
-
+print("here we are in options.py _______________---------------$$$$$$$$$$$$")
 def _listCpuTypes(option, opt, value, parser):
     CpuConfig.print_cpu_list()
     sys.exit(0)
@@ -63,9 +63,44 @@ def _listPlatformTypes(option, opt, value, parser):
 
 def addCommonOptions(parser):
     # system options
+    parser.add_option("--extra", type="int", default=0)
+    parser.add_option("--instructionQueue-instruction-flag", type="int", default=0)
+    parser.add_option("--instructionQueue-instruction-faultType", type="int", default=0)
+    parser.add_option("--instructionQueue-instruction-faultRate", type="float", default=0.0)
+    parser.add_option("--reorderBuffer-instruction-flag", type="int", default=0)
+    parser.add_option("--reorderBuffer-instruction-faultType", type="int", default=0)
+    parser.add_option("--reorderBuffer-instruction-faultRate", type="float", default=0.0)
+    parser.add_option("--register-integer-flag", type="int", default=0)
+    parser.add_option("--register-integer-faultType", type="int", default=0)
+    parser.add_option("--register-integer-faultRate", type="float", default=0.0)
+    parser.add_option("--register-floatingPoint-flag", type="int", default=0)
+    parser.add_option("--register-floatingPoint-faultType", type="int", default=0)
+    parser.add_option("--register-floatingPoint-faultRate", type="float", default=0.0)
+    parser.add_option("--cache-tag-flag", type="int", default=0)
+    parser.add_option("--cache-tag-faultType", type="int", default=0)
+    parser.add_option("--cache-tag-faultRate", type="float", default=0.0)
+    parser.add_option("--cache-state-flag", type="int", default=0)
+    parser.add_option("--cache-state-faultType", type="int", default=0)
+    parser.add_option("--cache-state-faultRate", type="float", default=0.0)
+    parser.add_option("--cache-data-flag", type="int", default=0)
+    parser.add_option("--cache-data-faultType", type="int", default=0)
+    parser.add_option("--cache-data-faultRate", type="float", default=0.0)
+    parser.add_option("--tlb-tag-flag", type="int", default=0)
+    parser.add_option("--tlb-tag-faultType", type="int", default=0)
+    parser.add_option("--tlb-tag-faultRate", type="float", default=0.0)
+    parser.add_option("--tlb-state-flag", type="int", default=0)
+    parser.add_option("--tlb-state-faultType", type="int", default=0)
+    parser.add_option("--tlb-state-faultRate", type="float", default=0.0)
+    parser.add_option("--tlb-data-flag", type="int", default=0)
+    parser.add_option("--tlb-data-faultType", type="int", default=0)
+    parser.add_option("--tlb-data-faultRate", type="float", default=0.0)
+    parser.add_option("--encodingType", type="choice", default="none", choices=['hamming', 'berger', 'cyclic', 'single_check', 'double_check', 'none'])
+    parser.add_option("--encodingHidden", type="int", default=0)
+
     parser.add_option("--list-cpu-types",
                       action="callback", callback=_listCpuTypes,
                       help="List available CPU types")
+    parser.add_option("--test-Flag", type="int", default=0)
     parser.add_option("--cpu-type", type="choice", default="atomic",
                       choices=CpuConfig.cpu_names(),
                       help = "type of cpu to run with")

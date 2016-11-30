@@ -422,6 +422,7 @@ def repeatSwitch(testsys, repeat_switch_cpu_list, maxtick, switch_freq):
             return exit_event
 
 def run(options, root, testsys, cpu_class):
+    print(cpu_class)
     if options.checkpoint_dir:
         cptdir = options.checkpoint_dir
     elif m5.options.outdir:

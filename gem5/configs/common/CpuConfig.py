@@ -60,7 +60,6 @@ _cpu_aliases_all = [
 # this list.
 _cpu_aliases = {}
 
-
 def is_cpu_class(cls):
     """Determine if a class is a CPU that can be instantiated"""
 
@@ -75,7 +74,7 @@ def is_cpu_class(cls):
 
 def get(name):
     """Get a CPU class from a user provided class name or alias."""
-
+    print("accessed me!-------------------------------------------------")
     real_name = _cpu_aliases.get(name, name)
 
     try:

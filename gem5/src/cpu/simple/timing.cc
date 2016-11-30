@@ -68,6 +68,7 @@ void
 TimingSimpleCPU::init()
 {
     BaseSimpleCPU::init();
+    printf("hello there from init\n");
 }
 
 void
@@ -83,6 +84,9 @@ TimingSimpleCPU::TimingSimpleCPU(TimingSimpleCPUParams *p)
       fetchEvent(this)
 {
     _status = Idle;
+    
+    printf("hello there from init complicated\n");
+    printf("created object\n");
 }
 
 
@@ -807,7 +811,7 @@ TimingSimpleCPU::completeDataAccess(PacketPtr pkt)
            pkt->req->getFlags().isSet(Request::NO_ACCESS));
 
     pkt->req->setAccessLatency();
-
+    //pkt->print();
     updateCycleCounts();
 
     if (pkt->senderState) {

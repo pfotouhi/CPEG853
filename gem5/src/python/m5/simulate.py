@@ -67,10 +67,12 @@ _memory_modes = {
     }
 
 _drain_manager = internal.drain.DrainManager.instance()
+print("-----------------___________________--------------")
 
 # The final hook to generate .ini files.  Called from the user script
 # once the config is built.
 def instantiate(ckpt_dir=None):
+
     from m5 import options
 
     root = objects.Root.getInstance()

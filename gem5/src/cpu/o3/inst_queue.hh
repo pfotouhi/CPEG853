@@ -56,9 +56,11 @@
 #include "cpu/op_class.hh"
 #include "cpu/timebuf.hh"
 #include "sim/eventq.hh"
+#include "cpu/o3/encoder.hh"
 
 struct DerivO3CPUParams;
 class FUPool;
+class Encoder;
 class MemInterface;
 
 /**
@@ -306,6 +308,8 @@ class InstructionQueue
 
     /** Function unit pool. */
     FUPool *fuPool;
+    /** Encoder **/
+    Encoder *encoder;
 
     //////////////////////////////////////
     // Instruction lists, ready queues, and ordering

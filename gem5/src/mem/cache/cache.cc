@@ -63,6 +63,7 @@
 #include "mem/cache/mshr.hh"
 #include "mem/cache/prefetch/base.hh"
 #include "sim/sim_exit.hh"
+#include "cpu/o3/encoder.hh"
 
 Cache::Cache(const CacheParams *p)
     : BaseCache(p, p->system->cacheLineSize()),
@@ -83,10 +84,74 @@ Cache::Cache(const CacheParams *p)
                                   "CpuSidePort");
     memSidePort = new MemSidePort(p->name + ".mem_side", this,
                                   "MemSidePort");
+    printf("cache-tag-flag: %i\n", p->cache_tag_flag);
+    printf("cache-tag-faultType: %i\n", p->cache_tag_faultType);
+    printf("cache-tag-faultRate: %f\n", p->cache_tag_faultRate);
+    printf("cache-state-flag: %i\n", p->cache_state_flag);
+    printf("cache-state-faultType: %i\n", p->cache_state_faultType);
+    printf("cache-state-faultRate: %f\n", p->cache_state_faultRate);
+    printf("cache-data-flag: %i\n", p->cache_data_flag);
+    printf("cache-data-faultType: %i\n", p->cache_data_faultType);
+    printf("cache-data-faultRate: %f\n", p->cache_data_faultRate);
+    int testMatrix[3] = {0xff3, 200, 300};
+    data_code_t z;
+    z.data = testMatrix;
+    z.data_size = 4;
+    z.generator = 2;
+    printf("----berger------");
+    p->encoder->bergerEncode(&z);
+    printf("size: %i\n", z.result_bits);
+    printf("result ============= %i\n", (int)z.result);
+    testMatrix[0] = z.result;
+    p->encoder->bergerDecode(&z);
+    printf("valid?: %i\n", z.valid);
 
+    printf("----cyclic-----");
+    testMatrix[0] = 0xff3;
+    p->encoder->cyclicEncode(&z);
+    printf("size: %i\n", z.result_bits);
+    printf("result ============= %i\n", (int)z.result);
+    testMatrix[0] = z.result;
+    p->encoder->cyclicDecode(&z);
+    printf("valid?: %i\n", z.valid);
+
+    printf("----checksum single");
+    testMatrix[0] = 0xff3;
+    p->encoder->single_checksumEncode(&z);
+    printf("size: %i\n", z.result_bits);
+    printf("result ============= %i\n", (int)z.result);
+    testMatrix[0] = z.result;
+    p->encoder->single_checksumDecode(&z);
+    printf("valid?: %i\n", z.valid);
+
+
+    printf("----checksum double ----");
+    testMatrix[0] = 0xff3;
+    p->encoder->double_checksumEncode(&z);
+    printf("size: %i\n", z.result_bits);
+    printf("result ============= %i\n", (int)z.result);
+    testMatrix[0] = z.result;
+    p->encoder->double_checksumDecode(&z);
+    printf("valid?: %i\n", z.valid);
+    //printf("zresult ======= %i\n", z.result);
     tags->setCache(this);
     if (prefetcher)
         prefetcher->setCache(this);
+
+    printf("----hamming----");
+    __uint128_t bigMat[2] = {0xff3f3, 0xff2};
+    z.data = bigMat;
+    z.data_size = 8;
+    p->encoder->hammingEncode(&z);
+    printf("size: %i\n", z.result_bits);
+    printf("result ============= %i\n", (int)z.result);
+    z.data_size = 9;
+    bigMat[0] = z.result;
+    p->encoder->hammingDecode(&z);
+    printf("valid?: %i\n", z.valid);
+    printf("result: %i\n", (int)z.result);
+
+    printf("encoding Type: %i\n", p->encodingType);
 }
 
 Cache::~Cache()

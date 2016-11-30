@@ -54,6 +54,7 @@
 #include "enums/OpClass.hh"
 #include "params/DerivO3CPU.hh"
 #include "sim/core.hh"
+#include "cpu/o3/encoder.hh"
 
 // clang complains about std::set being overloaded with Packet::set if
 // we open up the entire namespace std
@@ -89,11 +90,28 @@ InstructionQueue<Impl>::InstructionQueue(O3CPU *cpu_ptr, IEW *iew_ptr,
     : cpu(cpu_ptr),
       iewStage(iew_ptr),
       fuPool(params->fuPool),
+      encoder(params->encoder),
       numEntries(params->numIQEntries),
       totalWidth(params->issueWidth),
       commitToIEWDelay(params->commitToIEWDelay)
 {
     assert(fuPool);
+    
+   
+    printf("instructionQueue-instruction-flag: %i\n", params->instructionQueue_instruction_flag);
+    printf("instructionQueue-instruction-faultType: %i\n", params->instructionQueue_instruction_faultType);
+    printf("instructionQueue-instruction-faultRate: %f\n", params->instructionQueue_instruction_faultRate);
+    printf("reorderBuffer-instruction-flag: %i\n", params->reorderBuffer_instruction_flag);
+    printf("reorderBuffer-instruction-faultType: %i\n", params->reorderBuffer_instruction_faultType);
+    printf("reorderBuffer-instruction-faultRate: %f\n", params->reorderBuffer_instruction_faultRate);
+    printf("register-integer-flag: %i\n", params->register_integer_flag);
+    printf("register-integer-faultType: %i\n", params->register_integer_faultType);
+    printf("register-integer-faultRate: %f\n", params->register_integer_faultRate);
+    printf("register-floatingPoint-flag: %i\n", params->register_floatingPoint_flag);
+    printf("register-floatingPoint-faultType: %i\n", params->register_floatingPoint_faultType);
+    printf("register-floatingPoint-faultRate: %f\n", params->register_floatingPoint_faultRate);
+ 
+
 
     numThreads = params->numThreads;
 

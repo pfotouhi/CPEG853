@@ -44,6 +44,8 @@ from m5.proxy import *
 from MemObject import MemObject
 from Prefetcher import BasePrefetcher
 from Tags import *
+from Encoding import *
+
 
 class BaseCache(MemObject):
     type = 'BaseCache'
@@ -52,6 +54,8 @@ class BaseCache(MemObject):
 
     size = Param.MemorySize("Capacity")
     assoc = Param.Unsigned("Associativity")
+    
+
 
     hit_latency = Param.Cycles("Hit latency")
     response_latency = Param.Cycles("Latency for the return path on a miss");
@@ -109,3 +113,15 @@ class Cache(BaseCache):
     # this should be set to True for anything but the last-level
     # cache.
     writeback_clean = Param.Bool(False, "Writeback clean lines")
+    cache_tag_flag = Param.Int(0, "cache tag flag")
+    cache_tag_faultType = Param.Int(0, "cache tag faultType")
+    cache_tag_faultRate = Param.Float(0.0, "cache tag faultRate")
+    cache_state_flag = Param.Int(0, "cache state flag")
+    cache_state_faultType = Param.Int(0, "cache state faultType")
+    cache_state_faultRate = Param.Float(0.0, "cache state faultRate")
+    cache_data_flag = Param.Int(0, "cache data flag")
+    cache_data_faultType = Param.Int(0, "cache data faultType")
+    cache_data_faultRate = Param.Float(0.0, "cache data faultRate")
+    encodingType = Param.Int(0, "Encoding Type")
+    encoder = Param.Encoder(DefaultEncoder(), "Encoder Unit")
+

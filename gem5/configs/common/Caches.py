@@ -54,11 +54,33 @@ class L1Cache(Cache):
     tgts_per_mshr = 20
 
 class L1_ICache(L1Cache):
+    cache_tag_flag = 0
+    cache_tag_faultType = 0
+    cache_tag_faultRate = 0.0
+    cache_state_flag = 0
+    cache_state_faultType = 0
+    cache_state_faultRate = 0.0
+    cache_data_flag = 0
+    cache_data_faultType = 0
+    cache_data_faultRate = 0.0
+    encodingType = 0
     is_read_only = True
+    #encoder = None
     # Writeback clean lines as well
     writeback_clean = True
 
 class L1_DCache(L1Cache):
+    cache_tag_flag = 0
+    cache_tag_faultType = 0
+    cache_tag_faultRate = 0.0
+    cache_state_flag = 0
+    cache_state_faultType = 0
+    cache_state_faultRate = 0.0
+    cache_data_flag = 0
+    cache_data_faultType = 0
+    cache_data_faultRate = 0.0
+    encodingType = 0
+    #encoder = None
     pass
 
 class L2Cache(Cache):
@@ -81,6 +103,7 @@ class PageTableWalkerCache(Cache):
     assoc = 2
     hit_latency = 2
     response_latency = 2
+    #extra = 0
     mshrs = 10
     size = '1kB'
     tgts_per_mshr = 12

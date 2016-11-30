@@ -45,7 +45,7 @@ import m5
 from m5.objects import *
 from Caches import *
 
-def config_cache(options, system):
+def config_cache(options, system, encoder=None):
     if options.external_memory_system and (options.caches or options.l2cache):
         print "External caches and internal caches are exclusive options.\n"
         sys.exit(1)
@@ -59,7 +59,6 @@ def config_cache(options, system):
         except:
             print "arm_detailed is unavailable. Did you compile the O3 model?"
             sys.exit(1)
-
         dcache_class, icache_class, l2_cache_class, walk_cache_class = \
             O3_ARM_v7a_DCache, O3_ARM_v7a_ICache, O3_ARM_v7aL2, \
             O3_ARM_v7aWalkCache
@@ -81,6 +80,7 @@ def config_cache(options, system):
         fatal("When elastic trace is enabled, do not configure L2 caches.")
 
     if options.l2cache:
+
         # Provide a clock for the L2 and the L1-to-L2 bus here as they
         # are not connected using addTwoLevelCacheHierarchy. Use the
         # same clock as the CPUs.
@@ -96,15 +96,49 @@ def config_cache(options, system):
         system.memchecker = MemChecker()
 
     for i in xrange(options.num_cpus):
+        '''
+        system.cpu[i].cache_tag_flag = options.cache_tag_flag
+        system.cpu[i].cache_tag_faultType = options.cache_tag_faultType
+        system.cpu[i].cache_tag_faultRate = options.cache_tag_faultRate
+        system.cpu[i].cache_state_flag = options.cache_state_flag
+        system.cpu[i].cache_state_faultType = options.cache_state_faultType
+        system.cpu[i].cache_state_faultRate = options.cache_state_faultRate
+        system.cpu[i].cache_data_flag = options.cache_data_flag
+        system.cpu[i].cache_data_faultType = options.cache_data_faultType
+        system.cpu[i].cache_data_faultRate = options.cache_data_faultRate
+        '''
         if options.caches:
             icache = icache_class(size=options.l1i_size,
-                                  assoc=options.l1i_assoc)
+                                  assoc=options.l1i_assoc,
+                                  cache_tag_flag=options.cache_tag_flag,
+                                  cache_tag_faultType=options.cache_tag_faultType,
+                                  cache_tag_faultRate=options.cache_tag_faultRate,
+                                  cache_state_flag=options.cache_state_flag,
+                                  cache_state_faultType=options.cache_state_faultType,
+                                  cache_state_faultRate=options.cache_state_faultRate,
+                                  cache_data_flag=options.cache_data_flag,
+                                  cache_data_faultType=options.cache_data_faultType,
+                                  cache_data_faultRate=options.cache_data_faultRate, 
+                                  encodingType=options.encodingHidden,
+                                  encoder=encoder)
             dcache = dcache_class(size=options.l1d_size,
-                                  assoc=options.l1d_assoc)
+                                  assoc=options.l1d_assoc,
+                                  cache_tag_flag=options.cache_tag_flag,
+                                  cache_tag_faultType=options.cache_tag_faultType,
+                                  cache_tag_faultRate=options.cache_tag_faultRate,
+                                  cache_state_flag=options.cache_state_flag,
+                                  cache_state_faultType=options.cache_state_faultType,
+                                  cache_state_faultRate=options.cache_state_faultRate,
+                                  cache_data_flag=options.cache_data_flag,
+                                  cache_data_faultType=options.cache_data_faultType,
+                                  cache_data_faultRate=options.cache_data_faultRate,
+                                  encodingType=options.encodingHidden,
+                                  encoder=encoder)
 
             # If we have a walker cache specified, instantiate two
             # instances here
             if walk_cache_class:
+                print('not here')
                 iwalkcache = walk_cache_class()
                 dwalkcache = walk_cache_class()
             else:
@@ -149,6 +183,7 @@ def config_cache(options, system):
                         ExternalCache("cpu%d.dcache" % i),
                         ExternalCache("cpu%d.itb_walker_cache" % i),
                         ExternalCache("cpu%d.dtb_walker_cache" % i))
+
             else:
                 system.cpu[i].addPrivateSplitL1Caches(
                         ExternalCache("cpu%d.icache" % i),
@@ -160,6 +195,7 @@ def config_cache(options, system):
         elif options.external_memory_system:
             system.cpu[i].connectUncachedPorts(system.membus)
         else:
+            print("caches here")
             system.cpu[i].connectAllPorts(system.membus)
 
     return system

@@ -63,6 +63,11 @@ from common import MemConfig
 from common.Caches import *
 from common.cpu2000 import *
 
+encoder = DefaultEncoder()
+
+
+
+
 # Check if KVM support has been enabled, we might need to do VM
 # configuration if that's the case.
 have_kvm_support = 'BaseKvmCPU' in globals()
@@ -120,15 +125,67 @@ def get_processes(options):
     else:
         return multiprocesses, 1
 
+print("reading options")
+
+
 
 parser = optparse.OptionParser()
 Options.addCommonOptions(parser)
 Options.addSEOptions(parser)
 
+
+
 if '--ruby' in sys.argv:
     Ruby.define_options(parser)
 
 (options, args) = parser.parse_args()
+
+if(options.encodingType == 'hamming'):
+    options.encodingHidden = 2
+elif(options.encodingType == 'cyclic'):
+    options.encodingHidden = 1
+elif(options.encodingType == 'berger'):
+    options.encodingHidden = 3
+elif(options.encodingType == 'single_check'):
+    options.encodingHidden = 4
+elif(options.encodingType == 'double_check'):
+    options.encodingHidden = 5
+
+
+encoder.instructionQueue_instruction_flag = options.instructionQueue_instruction_flag
+encoder.instructionQueue_instruction_faultType = options.instructionQueue_instruction_faultType
+encoder.instructionQueue_instruction_faultRate = options.instructionQueue_instruction_faultRate
+encoder.reorderBuffer_instruction_flag = options.reorderBuffer_instruction_flag
+encoder.reorderBuffer_instruction_faultType = options.reorderBuffer_instruction_faultType
+encoder.reorderBuffer_instruction_faultRate = options.reorderBuffer_instruction_faultRate
+encoder.register_integer_flag = options.register_integer_flag
+encoder.register_integer_faultType = options.register_integer_faultType
+encoder.register_integer_faultRate = options.register_integer_faultRate
+encoder.register_floatingPoint_flag = options.register_floatingPoint_flag
+encoder.register_floatingPoint_faultType = options.register_floatingPoint_faultType
+encoder.register_floatingPoint_faultRate = options.register_floatingPoint_faultRate
+encoder.encodingType = options.encodingHidden
+encoder.encodingType = options.encodingHidden
+encoder.tlb_tag_flag = options.tlb_tag_flag
+encoder.tlb_tag_faultType = options.tlb_tag_faultType
+encoder.tlb_tag_faultRate = options.tlb_tag_faultRate
+encoder.tlb_state_flag = options.tlb_state_flag
+encoder.tlb_state_faultType = options.tlb_state_faultType
+encoder.tlb_state_faultRate = options.tlb_state_faultRate
+encoder.tlb_data_flag = options.tlb_data_flag
+encoder.tlb_data_faultType = options.tlb_data_faultType
+encoder.tlb_data_faultRate = options.tlb_data_faultRate
+encoder.encodingType = options.encodingHidden
+encoder.tlb_tag_flag = options.tlb_tag_flag
+encoder.tlb_tag_faultType = options.tlb_tag_faultType
+encoder.tlb_tag_faultRate = options.tlb_tag_faultRate
+encoder.tlb_state_flag = options.tlb_state_flag
+encoder.tlb_state_faultType = options.tlb_state_faultType
+encoder.tlb_state_faultRate = options.tlb_state_faultRate
+encoder.tlb_data_flag = options.tlb_data_flag
+encoder.tlb_data_faultType = options.tlb_data_faultType
+encoder.tlb_data_faultRate = options.tlb_data_faultRate
+
 
 if args:
     print "Error: script doesn't take any positional arguments"
@@ -166,7 +223,7 @@ else:
     sys.exit(1)
 
 
-(CPUClass, test_mem_mode, FutureClass) = Simulation.setCPUClass(options)
+(CPUClass, test_mem_mode, FutureClass) = Simulation.setCPUClass(options)#------
 CPUClass.numThreads = numThreads
 
 # Check -- do not allow SMT with multiple CPUs
@@ -230,7 +287,95 @@ if options.simpoint_profile:
     if np > 1:
         fatal("SimPoint generation not supported with more than one CPUs")
 
+'''
+system.test_Flag = options.test_Flag
+system.instructionQueue_instruction_flag = options.instructionQueue_instruction_flag
+system.instructionQueue_instruction_faultType = options.instructionQueue_instruction_faultType
+system.instructionQueue_instruction_faultRate = options.instructionQueue_instruction_faultRate
+system.reorderBuffer_instruction_flag = options.reorderBuffer_instruction_flag
+system.reorderBuffer_instruction_faultType = options.reorderBuffer_instruction_faultType
+system.reorderBuffer_instruction_faultRate = options.reorderBuffer_instruction_faultRate
+system.register_integer_flag = options.register_integer_flag
+system.register_integer_faultType = options.register_integer_faultType
+system.register_integer_faultRate = options.register_integer_faultRate
+system.register_floatingPoint_flag = options.register_floatingPoint_flag
+system.register_floatingPoint_faultType = options.register_floatingPoint_faultType
+system.register_floatingPoint_faultRate = options.register_floatingPoint_faultRate
+system.cache_tag_flag = options.cache_tag_flag
+system.cache_tag_faultType = options.cache_tag_faultType
+system.cache_tag_faultRate = options.cache_tag_faultRate
+system.cache_state_flag = options.cache_state_flag
+system.cache_state_faultType = options.cache_state_faultType
+system.cache_state_faultRate = options.cache_state_faultRate
+system.cache_data_flag = options.cache_data_flag
+system.cache_data_faultType = options.cache_data_faultType
+system.cache_data_faultRate = options.cache_data_faultRate
+system.tlb_tag_flag = options.tlb_tag_flag
+system.tlb_tag_faultType = options.tlb_tag_faultType
+system.tlb_tag_faultRate = options.tlb_tag_faultRate
+system.tlb_state_flag = options.tlb_state_flag
+system.tlb_state_faultType = options.tlb_state_faultType
+system.tlb_state_faultRate = options.tlb_state_faultRate
+system.tlb_data_flag = options.tlb_data_flag
+system.tlb_data_faultType = options.tlb_data_faultType
+system.tlb_data_faultRate = options.tlb_data_faultRate
+'''
+
+
+
+
 for i in xrange(np):
+    system.cpu[i].test_Flag = options.test_Flag
+    system.cpu[i].instructionQueue_instruction_flag = options.instructionQueue_instruction_flag
+    system.cpu[i].instructionQueue_instruction_faultType = options.instructionQueue_instruction_faultType
+    system.cpu[i].instructionQueue_instruction_faultRate = options.instructionQueue_instruction_faultRate
+    system.cpu[i].reorderBuffer_instruction_flag = options.reorderBuffer_instruction_flag
+    system.cpu[i].reorderBuffer_instruction_faultType = options.reorderBuffer_instruction_faultType
+    system.cpu[i].reorderBuffer_instruction_faultRate = options.reorderBuffer_instruction_faultRate
+    system.cpu[i].register_integer_flag = options.register_integer_flag
+    system.cpu[i].register_integer_faultType = options.register_integer_faultType
+    system.cpu[i].register_integer_faultRate = options.register_integer_faultRate
+    system.cpu[i].register_floatingPoint_flag = options.register_floatingPoint_flag
+    system.cpu[i].register_floatingPoint_faultType = options.register_floatingPoint_faultType
+    system.cpu[i].register_floatingPoint_faultRate = options.register_floatingPoint_faultRate
+    system.cpu[i].encodingType = options.encodingHidden
+    system.cpu[i].encoder = encoder
+    #system.cpu[i].tlb_tag_flag = options.tlb_tag_flag
+    #system.cpu[i].tlb_tag_faultType = options.tlb_tag_faultType
+    #system.cpu[i].tlb_tag_faultRate = options.tlb_tag_faultRate
+    #system.cpu[i].tlb_state_flag = options.tlb_state_flag
+    #system.cpu[i].tlb_state_faultType = options.tlb_state_faultType
+    #system.cpu[i].tlb_state_faultRate = options.tlb_state_faultRate
+    #system.cpu[i].tlb_data_flag = options.tlb_data_flag
+    #system.cpu[i].tlb_data_faultType = options.tlb_data_faultType
+    #system.cpu[i].tlb_data_faultRate = options.tlb_data_faultRate
+    system.cpu[i].itb.extraFun = 3
+    system.cpu[i].dtb.extraFun = 4
+    system.cpu[i].itb.encodingType = options.encodingHidden
+    system.cpu[i].itb.tlb_tag_flag = options.tlb_tag_flag
+    system.cpu[i].itb.tlb_tag_faultType = options.tlb_tag_faultType
+    system.cpu[i].itb.tlb_tag_faultRate = options.tlb_tag_faultRate
+    system.cpu[i].itb.tlb_state_flag = options.tlb_state_flag
+    system.cpu[i].itb.tlb_state_faultType = options.tlb_state_faultType
+    system.cpu[i].itb.tlb_state_faultRate = options.tlb_state_faultRate
+    system.cpu[i].itb.tlb_data_flag = options.tlb_data_flag
+    system.cpu[i].itb.tlb_data_faultType = options.tlb_data_faultType
+    system.cpu[i].itb.tlb_data_faultRate = options.tlb_data_faultRate
+    system.cpu[i].dtb.encodingType = options.encodingHidden
+    system.cpu[i].dtb.tlb_tag_flag = options.tlb_tag_flag
+    system.cpu[i].dtb.tlb_tag_faultType = options.tlb_tag_faultType
+    system.cpu[i].dtb.tlb_tag_faultRate = options.tlb_tag_faultRate
+    system.cpu[i].dtb.tlb_state_flag = options.tlb_state_flag
+    system.cpu[i].dtb.tlb_state_faultType = options.tlb_state_faultType
+    system.cpu[i].dtb.tlb_state_faultRate = options.tlb_state_faultRate
+    system.cpu[i].dtb.tlb_data_flag = options.tlb_data_flag
+    system.cpu[i].dtb.tlb_data_faultType = options.tlb_data_faultType
+    system.cpu[i].dtb.tlb_data_faultRate = options.tlb_data_faultRate
+
+    system.cpu[i].dtb.encoder = encoder
+    system.cpu[i].itb.encoder = encoder
+    #add options and parameters here!
+   
     if options.smt:
         system.cpu[i].workload = multiprocesses
     elif len(multiprocesses) == 1:
@@ -277,11 +422,20 @@ if options.ruby:
             system.cpu[i].itb.walker.port = ruby_port.slave
             system.cpu[i].dtb.walker.port = ruby_port.slave
 else:
+    print("we are doing this building here")
     MemClass = Simulation.setMemClass(options)
     system.membus = SystemXBar()
     system.system_port = system.membus.slave
-    CacheConfig.config_cache(options, system)
+    CacheConfig.config_cache(options, system, encoder)
     MemConfig.config_mem(options, system)
 
 root = Root(full_system = False, system = system)
+#root.encrypter = EncodeObject()
+print('--------------')
+print(FutureClass)
+print(options)
+print(root)
+print(system)
+print(options.test_Flag)
+print('-----------')
 Simulation.run(options, root, system, FutureClass)

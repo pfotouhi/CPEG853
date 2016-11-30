@@ -111,3 +111,5 @@ class System(MemObject):
     # Dynamic voltage and frequency handler for the system, disabled by default
     # Provide list of domains that need to be controlled by the handler
     dvfs_handler = DVFSHandler()
+
+    

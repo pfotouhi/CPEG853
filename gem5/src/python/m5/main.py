@@ -33,7 +33,6 @@ import socket
 import sys
 
 __all__ = [ 'options', 'arguments', 'main' ]
-
 usage="%prog [gem5 options] script.py [script options]"
 version="%prog 2.0"
 brief_copyright=\

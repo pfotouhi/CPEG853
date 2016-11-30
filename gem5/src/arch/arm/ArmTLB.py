@@ -41,6 +41,8 @@ from m5.SimObject import SimObject
 from m5.params import *
 from m5.proxy import *
 from MemObject import MemObject
+from Encoding import *
+
 
 # Basic stage 1 translation objects
 class ArmTableWalker(MemObject):
@@ -66,6 +68,20 @@ class ArmTLB(SimObject):
     size = Param.Int(64, "TLB size")
     walker = Param.ArmTableWalker(ArmTableWalker(), "HW Table walker")
     is_stage2 = Param.Bool(False, "Is this a stage 2 TLB?")
+    extraFun = Param.Int(2, "extraFun")
+    tlb_tag_flag = Param.Int(0, "tlb tag flag")
+    tlb_tag_faultType = Param.Int(0, "tlb tag faultType")
+    tlb_tag_faultRate = Param.Float(0.0, "tlb tag faultRate")
+    tlb_state_flag = Param.Int(0, "tlb state flag")
+    tlb_state_faultType = Param.Int(0, "tlb state faultType")
+    tlb_state_faultRate = Param.Float(0.0, "tlb state faultRate")
+    tlb_data_flag = Param.Int(0, "tlb data flag")
+    tlb_data_faultType = Param.Int(0, "tlb data faultType")
+    tlb_data_faultRate = Param.Float(0.0, "tlb data faultRate")
+    sys = Param.System(Parent.any, "system object")
+    encodingType = Param.Int(0, "Encoding Type")
+    encoder = Param.Encoder(DefaultEncoder(), "Encoder Unit")
+
 
 # Stage 2 translation objects, only used when virtualisation is being used
 class ArmStage2TableWalker(ArmTableWalker):

@@ -79,6 +79,8 @@ using namespace std;
 BaseO3CPU::BaseO3CPU(BaseCPUParams *params)
     : BaseCPU(params)
 {
+    printf("my parameter: %i\n", params->test_Flag);
+
 }
 
 void

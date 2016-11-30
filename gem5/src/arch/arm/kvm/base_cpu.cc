@@ -61,6 +61,8 @@ BaseArmKvmCPU::BaseArmKvmCPU(BaseArmKvmCPUParams *params)
     : BaseKvmCPU(params),
       irqAsserted(false), fiqAsserted(false)
 {
+        printf("my parameter: %i\n", p->test_Flag);
+
 }
 
 BaseArmKvmCPU::~BaseArmKvmCPU()
@@ -78,7 +80,6 @@ BaseArmKvmCPU::startup()
      */
     struct kvm_vcpu_init target_config;
     memset(&target_config, 0, sizeof(target_config));
-
     vm.kvmArmPreferredTarget(target_config);
     kvmArmVCpuInit(target_config);
 }

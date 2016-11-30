@@ -127,7 +127,25 @@ class BaseCPU(MemObject):
         self._ccObject.takeOverFrom(old_cpu._ccObject)
 
 
+    
+
     system = Param.System(Parent.any, "system object")
+    instructionQueue_instruction_flag = Param.Int(0, "instructionQueue instruction flag")
+    instructionQueue_instruction_faultType = Param.Int(0, "instructionQueue instruction faultType")
+    instructionQueue_instruction_faultRate = Param.Float(0.0, "instructionQueue instruction faultRate")
+    reorderBuffer_instruction_flag = Param.Int(0, "reorderBuffer instruction flag")
+    reorderBuffer_instruction_faultType = Param.Int(0, "reorderBuffer instruction faultType")
+    reorderBuffer_instruction_faultRate = Param.Float(0.0, "reorderBuffer instruction faultRate")
+    register_integer_flag = Param.Int(0, "register integer flag")
+    register_integer_faultType = Param.Int(0, "register integer faultType")
+    register_integer_faultRate = Param.Float(0.0, "register integer faultRate")
+    register_floatingPoint_flag = Param.Int(0, "register floatingPoint flag")
+    register_floatingPoint_faultType = Param.Int(0, "register floatingPoint faultType")
+    register_floatingPoint_faultRate = Param.Float(0.0, "register floatingPoint faultRate")
+
+    encodingType = Param.Int(0, "Encoding Type")
+    
+    test_Flag = Param.Int(0, "test flag")
     cpu_id = Param.Int(-1, "CPU identifier")
     socket_id = Param.Unsigned(0, "Physical Socket identifier")
     numThreads = Param.Unsigned(1, "number of HW thread contexts")

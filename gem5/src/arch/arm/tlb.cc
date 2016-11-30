@@ -68,6 +68,8 @@
 #include "params/ArmTLB.hh"
 #include "sim/full_system.hh"
 #include "sim/process.hh"
+#include "sim/system.hh"
+#include "cpu/o3/encoder.hh"
 
 using namespace std;
 using namespace ArmISA;
@@ -82,11 +84,24 @@ TLB::TLB(const ArmTLBParams *p)
       miscRegValid(false), miscRegContext(0), curTranType(NormalTran)
 {
     tableWalker->setTlb(this);
-
+    printf("this is how we make our TLB it is arm\n");
+    //ArmSystem *armSys = dynamic_cast<ArmSystem *>(p->sys);
+    printf("our param is: %i\n", p->extraFun);
+    //printf("tlb-tag-flag: %i\n", p->sys->ca;
     // Cache system-level properties
+    printf("tlb-tag-flag: %i\n", p->tlb_tag_flag);
+    printf("tlb-tag-faultType: %i\n", p->tlb_tag_faultType);
+    printf("tlb-tag-faultRate: %f\n", p->tlb_tag_faultRate);
+    printf("tlb-state-flag: %i\n", p->tlb_state_flag);
+    printf("tlb-state-faultType: %i\n", p->tlb_state_faultType);
+    printf("tlb-state-faultRate: %f\n", p->tlb_state_faultRate);
+    printf("tlb-data-flag: %i\n", p->tlb_data_flag);
+    printf("tlb-data-faultType: %i\n", p->tlb_data_faultType);
+    printf("tlb-data-faultRate: %f\n", p->tlb_data_faultRate);
     haveLPAE = tableWalker->haveLPAE();
     haveVirtualization = tableWalker->haveVirtualization();
     haveLargeAsid64 = tableWalker->haveLargeAsid64();
+    
 }
 
 TLB::~TLB()

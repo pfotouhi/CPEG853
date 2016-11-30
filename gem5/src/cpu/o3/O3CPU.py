@@ -31,6 +31,7 @@ from m5.params import *
 from m5.proxy import *
 from BaseCPU import BaseCPU
 from FUPool import *
+from Encoding import *
 from O3Checker import O3Checker
 from BranchPredictor import *
 
@@ -51,6 +52,11 @@ class DerivO3CPU(BaseCPU):
         return True
 
     activity = Param.Unsigned(0, "Initial count")
+    testParam = Param.Unsigned(100, "hello param")
+    test_Flag = Param.Int(0, "test flag")
+
+    
+
 
     cachePorts = Param.Unsigned(200, "Cache Ports")
 
@@ -87,6 +93,7 @@ class DerivO3CPU(BaseCPU):
     issueWidth = Param.Unsigned(8, "Issue width")
     wbWidth = Param.Unsigned(8, "Writeback width")
     fuPool = Param.FUPool(DefaultFUPool(), "Functional Unit pool")
+    encoder = Param.Encoder(DefaultEncoder(), "Encoder Unit")
 
     iewToCommitDelay = Param.Cycles(1, "Issue/Execute/Writeback to commit "
                "delay")
