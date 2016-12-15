@@ -173,7 +173,8 @@ FullO3CPU<Impl>::FullO3CPU(DerivO3CPUParams *params)
 
       regFile(params->numPhysIntRegs,
               params->numPhysFloatRegs,
-              params->numPhysCCRegs),
+              params->numPhysCCRegs,
+              params->encoder),
 
       freeList(name() + ".freelist", &regFile),
 

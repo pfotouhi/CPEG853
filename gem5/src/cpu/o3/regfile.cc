@@ -37,7 +37,8 @@
 
 PhysRegFile::PhysRegFile(unsigned _numPhysicalIntRegs,
                          unsigned _numPhysicalFloatRegs,
-                         unsigned _numPhysicalCCRegs)
+                         unsigned _numPhysicalCCRegs,
+                         Encoder *encoderPassed)
     : intRegFile(_numPhysicalIntRegs),
       floatRegFile(_numPhysicalFloatRegs),
       ccRegFile(_numPhysicalCCRegs),
@@ -53,6 +54,7 @@ PhysRegFile::PhysRegFile(unsigned _numPhysicalIntRegs,
         warn("Non-zero number of physical CC regs specified, even though\n"
              "    ISA does not use them.\n");
     }
+    encoder = encoderPassed;
 }
 
 
