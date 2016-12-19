@@ -23,6 +23,9 @@ struct data_code_t {
 class Encoder : public SimObject {
 public:
 	Encoder(EncoderParams *p);
+	
+	EncoderParams *params;
+
 
 	void enc(data_code_t z);
 	void enc2(data_code_t* z);

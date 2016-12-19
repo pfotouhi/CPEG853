@@ -2,8 +2,8 @@
 
 
 
-Encoder::Encoder(EncoderParams *params) : SimObject(params) {
-	printf("made enc\n\n");
+Encoder::Encoder(EncoderParams *passedParams) : SimObject(params) {
+	/*printf("made enc\n\n");
 	printf("instructionQueue-instruction-flag: %i\n", params->instructionQueue_instruction_flag);
     printf("instructionQueue-instruction-faultType: %i\n", params->instructionQueue_instruction_faultType);
     printf("instructionQueue-instruction-faultRate: %f\n", params->instructionQueue_instruction_faultRate);
@@ -33,7 +33,8 @@ Encoder::Encoder(EncoderParams *params) : SimObject(params) {
     printf("cache-state-faultRate: %f\n", params->cache_state_faultRate);
     printf("cache-data-flag: %i\n", params->cache_data_flag);
     printf("cache-data-faultType: %i\n", params->cache_data_faultType);
-    printf("cache-data-faultRate: %f\n", params->cache_data_faultRate);
+    printf("cache-data-faultRate: %f\n", params->cache_data_faultRate);*/
+    params = passedParams;
 }
 
 int
