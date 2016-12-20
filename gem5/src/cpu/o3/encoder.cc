@@ -2,7 +2,7 @@
 
 
 
-Encoder::Encoder(EncoderParams *passedParams) : SimObject(params) {
+Encoder::Encoder(EncoderParams *params) : SimObject(params) {
 	/*printf("made enc\n\n");
 	printf("instructionQueue-instruction-flag: %i\n", params->instructionQueue_instruction_flag);
     printf("instructionQueue-instruction-faultType: %i\n", params->instructionQueue_instruction_faultType);
@@ -34,7 +34,37 @@ Encoder::Encoder(EncoderParams *passedParams) : SimObject(params) {
     printf("cache-data-flag: %i\n", params->cache_data_flag);
     printf("cache-data-faultType: %i\n", params->cache_data_faultType);
     printf("cache-data-faultRate: %f\n", params->cache_data_faultRate);*/
-    params = passedParams;
+    instructionQueue_instruction_flag= params->instructionQueue_instruction_flag;
+	instructionQueue_instruction_faultType= params->instructionQueue_instruction_faultType;
+	instructionQueue_instruction_faultRate= params->instructionQueue_instruction_faultRate;
+	reorderBuffer_instruction_flag= params->reorderBuffer_instruction_flag;
+	reorderBuffer_instruction_faultType= params->reorderBuffer_instruction_faultType;
+	reorderBuffer_instruction_faultRate= params->reorderBuffer_instruction_faultRate;
+	register_integer_flag= params->register_integer_flag;
+	register_integer_faultType= params->register_integer_faultType;
+	register_integer_faultRate= params->register_integer_faultRate;
+	register_floatingPoint_flag= params->register_floatingPoint_flag;
+	register_floatingPoint_faultType= params->register_floatingPoint_faultType;
+	register_floatingPoint_faultRate= params->register_floatingPoint_faultRate;
+	tlb_tag_flag= params->tlb_tag_flag;
+	tlb_tag_faultType= params->tlb_tag_faultType;
+	tlb_tag_faultRate= params->tlb_tag_faultRate;
+	tlb_state_flag= params->tlb_state_flag;
+	tlb_state_faultType= params->tlb_state_faultType;
+	tlb_state_faultRate= params->tlb_state_faultRate;
+	tlb_data_flag= params->tlb_data_flag;
+	tlb_data_faultType= params->tlb_data_faultType;
+	tlb_data_faultRate= params->tlb_data_faultRate;
+	cache_tag_flag= params->cache_tag_flag;
+	cache_tag_faultType= params->cache_tag_faultType;
+	cache_tag_faultRate= params->cache_tag_faultRate;
+	cache_state_flag= params->cache_state_flag;
+	cache_state_faultType= params->cache_state_faultType;
+	cache_state_faultRate= params->cache_state_faultRate;
+	cache_data_flag= params->cache_data_flag;
+	cache_data_faultType= params->cache_data_faultType;
+	cache_data_faultRate= params->cache_data_faultRate;
+    //params = passedParams;
 }
 
 int
@@ -417,10 +447,12 @@ Encoder::single_checksumEncode(data_code_t *z) {
 void
 Encoder::single_checksumDecode(data_code_t *z) {
 	__uint128_t out = 0;
+	__uint128_t out2 = 0;
 	int shift = 16;
 	std::memcpy(&out, (z->data), z->data_size);
 	__uint128_t cmask = 0xffff;
 	__uint128_t check = out & cmask;
+	out2 = out;
 	out = out >> shift;
 	__uint128_t csum = 0;
 	while(out) {
@@ -435,6 +467,8 @@ Encoder::single_checksumDecode(data_code_t *z) {
 	else {
 		z->valid = 0;
 	}
+	z->result = out2 >> shift;
+	z->result_bits = countBits(out2>>shift);
 }
 
 void
@@ -463,12 +497,13 @@ Encoder::double_checksumEncode(data_code_t *z) {
 void
 Encoder::double_checksumDecode(data_code_t *z) {
 	__uint128_t out = 0;
+	__uint128_t out2 = 0;
 	std::memcpy(&out, (z->data), z->data_size);
 	int shift = 16;
 	__uint128_t cmask = 0xffff;
 	__uint128_t caddMask = 0x1ffff;
 	__uint128_t check = out & caddMask;
-	
+	out2 = out;
 	out = out >> (shift+1);
 	__uint128_t csum = 0;
 	while(out) {
@@ -483,6 +518,8 @@ Encoder::double_checksumDecode(data_code_t *z) {
 	else {
 		z->valid = 0;
 	}
+	z->result = out2 >> (shift+1);
+	z->result_bits = countBits(out2>>(shift+1));
 	//printf("check: %x csum: %x\n", (int)check, (int)csum);
 }
 

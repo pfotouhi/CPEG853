@@ -105,6 +105,7 @@ Cache::Cache(const CacheParams *p)
     testMatrix[0] = z.result;
     p->encoder->bergerDecode(&z);
     printf("valid?: %i\n", z.valid);
+    printf("result ============= %i\n", (int)z.result);
 
     printf("----cyclic-----");
     testMatrix[0] = 0xff3;
@@ -114,6 +115,7 @@ Cache::Cache(const CacheParams *p)
     testMatrix[0] = z.result;
     p->encoder->cyclicDecode(&z);
     printf("valid?: %i\n", z.valid);
+    printf("result ============= %i\n", (int)z.result);
 
     printf("----checksum single");
     testMatrix[0] = 0xff3;
@@ -123,6 +125,7 @@ Cache::Cache(const CacheParams *p)
     testMatrix[0] = z.result;
     p->encoder->single_checksumDecode(&z);
     printf("valid?: %i\n", z.valid);
+    printf("result ============= %i\n", (int)z.result);
 
 
     printf("----checksum double ----");
@@ -133,7 +136,7 @@ Cache::Cache(const CacheParams *p)
     testMatrix[0] = z.result;
     p->encoder->double_checksumDecode(&z);
     printf("valid?: %i\n", z.valid);
-    //printf("zresult ======= %i\n", z.result);
+    printf("zresult ======= %i\n", (int)z.result);
     tags->setCache(this);
     if (prefetcher)
         prefetcher->setCache(this);
@@ -150,7 +153,7 @@ Cache::Cache(const CacheParams *p)
     p->encoder->hammingDecode(&z);
     printf("valid?: %i\n", z.valid);
     printf("result: %i\n", (int)z.result);
-
+    printf("result ============= %i\n", (int)z.result);
     printf("encoding Type: %i\n", p->encodingType);
 }
 

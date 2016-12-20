@@ -40,5 +40,7 @@ class Encoder(SimObject):
 	cache_data_faultType = Param.Int(0, "cache data faultType")
 	cache_data_faultRate = Param.Float(0.0, "cache data faultRate")
 
+	#params = Param.EncoderParams(NULL, "parameters")
+
 class DefaultEncoder(Encoder):
 	pass
