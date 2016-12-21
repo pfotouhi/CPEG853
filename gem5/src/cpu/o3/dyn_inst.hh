@@ -48,16 +48,17 @@
 
 #include "arch/isa_traits.hh"
 #include "config/the_isa.hh"
-#include "cpu/o3/cpu.hh"
-#include "cpu/o3/isa_specific.hh"
 #include "cpu/base_dyn_inst.hh"
 #include "cpu/inst_seq.hh"
+#include "cpu/o3/cpu.hh"
+#include "cpu/o3/isa_specific.hh"
+#include "cpu/o3/redundant_object.hh"
 #include "cpu/reg_class.hh"
 
 class Packet;
 
 template <class Impl>
-class BaseO3DynInst : public BaseDynInst<Impl>
+class BaseO3DynInst : public BaseDynInst<Impl>, public RedundantObject
 {
   public:
     /** Typedef for the CPU. */
@@ -331,7 +332,39 @@ class BaseO3DynInst : public BaseDynInst<Impl>
     {
         return this->staticInst->memAccInst()->execute(this, this->traceData);
     }
+
+    /**
+     * Group D additions
+     */
+    BaseO3DynInst* other;
+
+    IntReg readIntRegDestination(int idx)
+    {
+        //return this->cpu->readIntReg(this->_destRegIdx[idx]);
+        return this->cpu->readIntReg(idx);
+
+    }
+
+    FloatReg readFloatRegDestination(int idx)
+    {
+        return this->cpu->readFloatReg(idx);
+    }
+
+    FloatRegBits readFloatRegDestinationBits(int idx)
+    {
+        return this->cpu->readFloatRegBits(idx);
+    }
+
+    CCReg readCCRegDestination(int idx)
+    {
+        return this->cpu->readCCReg(idx);
+    }
+
+    bool verify();
+
+    void initOtherCopy();
+
+
 };
 
 #endif // __CPU_O3_ALPHA_DYN_INST_HH__
-

@@ -534,8 +534,19 @@ class FullO3CPU : public BaseO3CPU
     /** The dispatch stage. */
     typename CPUPolicy::Rename rename;
 
+    /* Group D */
+    /** The dispatch stage. */
+    typename CPUPolicy::Rename renameDup;
+    /* Group D */
+
     /** The issue/execute/writeback stages. */
     typename CPUPolicy::IEW iew;
+
+    /* Group D */
+    /** The issue/execute/writeback stages. */
+    typename CPUPolicy::IEW iewDup;
+    /* Group D */
+
 
     /** The commit stage. */
     typename CPUPolicy::Commit commit;
@@ -548,6 +559,11 @@ class FullO3CPU : public BaseO3CPU
 
     /** The rename map. */
     typename CPUPolicy::RenameMap renameMap[Impl::MaxThreads];
+
+    /* Group D */
+    /** The rename map. */
+    typename CPUPolicy::RenameMap renameMapDup[Impl::MaxThreads];
+    /* Group D */
 
     /** The commit rename map. */
     typename CPUPolicy::RenameMap commitRenameMap[Impl::MaxThreads];
@@ -598,6 +614,10 @@ class FullO3CPU : public BaseO3CPU
     /** The main time buffer to do backwards communication. */
     TimeBuffer<TimeStruct> timeBuffer;
 
+    /* Group D */
+    TimeBuffer<TimeStruct> timeBufferDup;
+    /* Group D */
+
     /** The fetch stage's instruction queue. */
     TimeBuffer<FetchStruct> fetchQueue;
 
@@ -607,8 +627,23 @@ class FullO3CPU : public BaseO3CPU
     /** The rename stage's instruction queue. */
     TimeBuffer<RenameStruct> renameQueue;
 
+    /* Group D */
+    /** The duplicated decode stage's instruction queue. */
+    TimeBuffer<DecodeStruct> decodeQueueDup;
+
+    /** The duplicated rename stage's instruction queue. */
+    TimeBuffer<RenameStruct> renameQueueDup;
+    /* Group D */
+
     /** The IEW stage's instruction queue. */
     TimeBuffer<IEWStruct> iewQueue;
+
+    /* Group D */
+    /** The duplicated iew stage's instruction queue. */
+    TimeBuffer<IEWStruct> iewQueueDup;
+    /* Group D */
+
+
 
   private:
     /** The activity recorder; used to tell if the CPU has any

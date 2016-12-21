@@ -45,8 +45,9 @@
 
 #include "base/cp_annotate.hh"
 #include "cpu/o3/dyn_inst.hh"
-#include "sim/full_system.hh"
+#include "cpu/reg_class.hh"
 #include "debug/O3PipeView.hh"
+#include "sim/full_system.hh"
 
 template <class Impl>
 BaseO3DynInst<Impl>::BaseO3DynInst(const StaticInstPtr &staticInst,
@@ -106,6 +107,7 @@ template <class Impl>
 void
 BaseO3DynInst<Impl>::initVars()
 {
+    this->other = NULL;
     // Make sure to have the renamed register entries set to the same
     // as the normal register entries.  It will allow the IQ to work
     // without any modifications.
@@ -256,6 +258,87 @@ BaseO3DynInst<Impl>::syscall(int64_t callnum)
     if (!(curPC == newPC)) {
         this->pcState(newPC);
     }
+}
+
+/* Group D */
+template <class Impl>
+bool
+BaseO3DynInst<Impl>::verify()
+{
+        if (other == NULL) {
+                return true;
+        }
+
+        unsigned num_dest_regs = this->numDestRegs();
+        // Verify the destination registers.
+        for (int dest_idx = 0; dest_idx < num_dest_regs; dest_idx++) {
+        TheISA::RegIndex dest_reg = this->renamedDestRegIdx(dest_idx);
+                IntReg intValue1;
+                IntReg intValue2;
+                FloatReg floatValue1;
+                FloatReg floatValue2;
+                CCReg ccValue1;
+                CCReg ccValue2;
+                switch (regIdxToClass(dest_reg)) {
+                case IntRegClass:
+                        intValue1 = readIntRegDestination(dest_reg);
+                        intValue2 = other->readIntRegDestination(dest_reg);
+                        if (intValue1 != intValue2)
+                                return false;
+                        break;
+
+                case FloatRegClass:
+                        floatValue1 = readFloatRegDestination(dest_reg);
+                        floatValue2 = other->readFloatRegDestination(dest_reg);
+                        if (floatValue1 != floatValue2)
+                                return false;
+                        break;
+
+                case CCRegClass:
+                        ccValue1 = readCCRegDestination(dest_reg);
+                        ccValue2 = other->readCCRegDestination(dest_reg);
+                        if (ccValue1 != ccValue2)
+                                return false;
+                        break;
+
+                default:
+                        panic("Reg index is out of bound: %d.", dest_reg);
+                }
+        }
+        return true;
+}
+
+template<class Impl>
+void BaseO3DynInst<Impl>::initOtherCopy()
+{
+        BaseO3DynInst<Impl>* instruction;
+        if (this->other == NULL) {
+                instruction = new BaseO3DynInst<Impl>(
+                                this->staticInst,
+                                this->macroop,
+                                this->pc,
+                                this->predPC,
+                                this->seqNum,
+                                this->cpu);
+        } else {
+                instruction = this->other;
+        }
+        this->setRedundant(false);
+        instruction->setRedundant(true);
+        this->other = instruction;
+        instruction->other=this;
+        instruction->setTid(this->threadNumber);
+        instruction->setASID(this->threadNumber);
+        instruction->setThreadState(this->cpu->thread[this->threadNumber]);
+        instruction->traceData = NULL;
+        instruction->setInstListIt(this->getInstListIt());
+        for (int x = 0; x < this->status.size(); x++) {
+                if (this->status.test(x)) {
+                        instruction->status.set(x);
+                } else {
+                        instruction->status.reset(x);
+                }
+        }
 }
 
 #endif//__CPU_O3_DYN_INST_IMPL_HH__

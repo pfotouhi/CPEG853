@@ -54,7 +54,6 @@
 #include "enums/OpClass.hh"
 #include "params/DerivO3CPU.hh"
 #include "sim/core.hh"
-#include "cpu/o3/encoder.hh"
 
 // clang complains about std::set being overloaded with Packet::set if
 // we open up the entire namespace std
@@ -86,32 +85,17 @@ InstructionQueue<Impl>::FUCompletion::description() const
 
 template <class Impl>
 InstructionQueue<Impl>::InstructionQueue(O3CPU *cpu_ptr, IEW *iew_ptr,
-                                         DerivO3CPUParams *params)
+                                         DerivO3CPUParams *params,
+                                         bool redundant)
     : cpu(cpu_ptr),
       iewStage(iew_ptr),
       fuPool(params->fuPool),
-      encoder(params->encoder),
       numEntries(params->numIQEntries),
       totalWidth(params->issueWidth),
       commitToIEWDelay(params->commitToIEWDelay)
 {
+    this->setRedundant(redundant);
     assert(fuPool);
-    
-   
-    printf("instructionQueue-instruction-flag: %i\n", params->instructionQueue_instruction_flag);
-    printf("instructionQueue-instruction-faultType: %i\n", params->instructionQueue_instruction_faultType);
-    printf("instructionQueue-instruction-faultRate: %f\n", params->instructionQueue_instruction_faultRate);
-    printf("reorderBuffer-instruction-flag: %i\n", params->reorderBuffer_instruction_flag);
-    printf("reorderBuffer-instruction-faultType: %i\n", params->reorderBuffer_instruction_faultType);
-    printf("reorderBuffer-instruction-faultRate: %f\n", params->reorderBuffer_instruction_faultRate);
-    printf("register-integer-flag: %i\n", params->register_integer_flag);
-    printf("register-integer-faultType: %i\n", params->register_integer_faultType);
-    printf("register-integer-faultRate: %f\n", params->register_integer_faultRate);
-    printf("register-floatingPoint-flag: %i\n", params->register_floatingPoint_flag);
-    printf("register-floatingPoint-faultType: %i\n", params->register_floatingPoint_faultType);
-    printf("register-floatingPoint-faultRate: %f\n", params->register_floatingPoint_faultRate);
- 
-
 
     numThreads = params->numThreads;
 
@@ -130,6 +114,7 @@ InstructionQueue<Impl>::InstructionQueue(O3CPU *cpu_ptr, IEW *iew_ptr,
     for (ThreadID tid = 0; tid < numThreads; tid++) {
         memDepUnit[tid].init(params, tid);
         memDepUnit[tid].setIQ(this);
+        memDepUnit[tid].setRedundant(redundant);
     }
 
     resetState();
@@ -183,6 +168,13 @@ InstructionQueue<Impl>::InstructionQueue(O3CPU *cpu_ptr, IEW *iew_ptr,
 }
 
 template <class Impl>
+InstructionQueue<Impl>::InstructionQueue(O3CPU *cpu_ptr, IEW *iew_ptr,
+                                         DerivO3CPUParams *params)
+    : InstructionQueue(cpu_ptr, iew_ptr, params, false)
+{
+}
+
+template <class Impl>
 InstructionQueue<Impl>::~InstructionQueue()
 {
     dependGraph.reset();
@@ -196,7 +188,8 @@ template <class Impl>
 std::string
 InstructionQueue<Impl>::name() const
 {
-    return cpu->name() + ".iq";
+    //Group D mod. Used to avoid stat naming conflicts
+    return cpu->name() + ".iq." + RedundantObject::name();
 }
 
 template <class Impl>
@@ -605,10 +598,13 @@ InstructionQueue<Impl>::insert(DynInstPtr &new_inst)
     // register(s).
     addToProducers(new_inst);
 
-    if (new_inst->isMemRef()) {
-        memDepUnit[new_inst->threadNumber].insert(new_inst);
-    } else {
-        addIfReady(new_inst);
+    /* Group D */
+    if (new_inst->isRedundant()!=true){
+      if (new_inst->isMemRef()) {
+          memDepUnit[new_inst->threadNumber].insert(new_inst);
+      } else {
+          addIfReady(new_inst);
+      }
     }
 
     ++iqInstsAdded;
@@ -648,8 +644,10 @@ InstructionQueue<Impl>::insertNonSpec(DynInstPtr &new_inst)
 
     // If it's a memory instruction, add it to the memory dependency
     // unit.
-    if (new_inst->isMemRef()) {
-        memDepUnit[new_inst->threadNumber].insertNonSpec(new_inst);
+    if (new_inst->isRedundant()!=true){
+      if (new_inst->isMemRef()) {
+          memDepUnit[new_inst->threadNumber].insertNonSpec(new_inst);
+      }
     }
 
     ++iqNonSpecInstsAdded;
@@ -663,7 +661,9 @@ template <class Impl>
 void
 InstructionQueue<Impl>::insertBarrier(DynInstPtr &barr_inst)
 {
-    memDepUnit[barr_inst->threadNumber].insertBarrier(barr_inst);
+    if (barr_inst->isRedundant()!=true){
+      memDepUnit[barr_inst->threadNumber].insertBarrier(barr_inst);
+    }
 
     insertNonSpec(barr_inst);
 }
@@ -966,82 +966,87 @@ template <class Impl>
 int
 InstructionQueue<Impl>::wakeDependents(DynInstPtr &completed_inst)
 {
-    int dependents = 0;
 
-    // The instruction queue here takes care of both floating and int ops
-    if (completed_inst->isFloating()) {
-        fpInstQueueWakeupQccesses++;
-    } else {
-        intInstQueueWakeupAccesses++;
-    }
+  int dependents = 0;
+/* Group D */
+if (completed_inst->isRedundant()!=true) {
+  // The instruction queue here takes care of both floating and int ops
+  if (completed_inst->isFloating()) {
+      fpInstQueueWakeupQccesses++;
+  } else {
+      intInstQueueWakeupAccesses++;
+  }
 
-    DPRINTF(IQ, "Waking dependents of completed instruction.\n");
+  DPRINTF(IQ, "Waking dependents of completed instruction.\n");
 
-    assert(!completed_inst->isSquashed());
+  assert(!completed_inst->isSquashed());
 
-    // Tell the memory dependence unit to wake any dependents on this
-    // instruction if it is a memory instruction.  Also complete the memory
-    // instruction at this point since we know it executed without issues.
-    // @todo: Might want to rename "completeMemInst" to something that
-    // indicates that it won't need to be replayed, and call this
-    // earlier.  Might not be a big deal.
-    if (completed_inst->isMemRef()) {
-        memDepUnit[completed_inst->threadNumber].wakeDependents(completed_inst);
-        completeMemInst(completed_inst);
-    } else if (completed_inst->isMemBarrier() ||
-               completed_inst->isWriteBarrier()) {
-        memDepUnit[completed_inst->threadNumber].completeBarrier(completed_inst);
-    }
+  // Tell the memory dependence unit to wake any dependents on this
+  // instruction if it is a memory instruction.  Also complete the memory
+  // instruction at this point since we know it executed without issues.
+  // @todo: Might want to rename "completeMemInst" to something that
+  // indicates that it won't need to be replayed, and call this
+  // earlier.  Might not be a big deal.
 
-    for (int dest_reg_idx = 0;
-         dest_reg_idx < completed_inst->numDestRegs();
-         dest_reg_idx++)
-    {
-        PhysRegIndex dest_reg =
-            completed_inst->renamedDestRegIdx(dest_reg_idx);
 
-        // Special case of uniq or control registers.  They are not
-        // handled by the IQ and thus have no dependency graph entry.
-        // @todo Figure out a cleaner way to handle this.
-        if (dest_reg >= numPhysRegs) {
-            DPRINTF(IQ, "dest_reg :%d, numPhysRegs: %d\n", dest_reg,
-                    numPhysRegs);
-            continue;
-        }
+  if (completed_inst->isMemRef()) {
+      memDepUnit[completed_inst->threadNumber].wakeDependents(completed_inst);
+      completeMemInst(completed_inst);
+  } else if (completed_inst->isMemBarrier() ||
+             completed_inst->isWriteBarrier()) {
+      memDepUnit[completed_inst->threadNumber].completeBarrier(completed_inst);
+  }
 
-        DPRINTF(IQ, "Waking any dependents on register %i.\n",
-                (int) dest_reg);
+  for (int dest_reg_idx = 0;
+       dest_reg_idx < completed_inst->numDestRegs();
+       dest_reg_idx++)
+  {
+      PhysRegIndex dest_reg =
+          completed_inst->renamedDestRegIdx(dest_reg_idx);
 
-        //Go through the dependency chain, marking the registers as
-        //ready within the waiting instructions.
-        DynInstPtr dep_inst = dependGraph.pop(dest_reg);
+      // Special case of uniq or control registers.  They are not
+      // handled by the IQ and thus have no dependency graph entry.
+      // @todo Figure out a cleaner way to handle this.
+      if (dest_reg >= numPhysRegs) {
+          DPRINTF(IQ, "dest_reg :%d, numPhysRegs: %d\n", dest_reg,
+                  numPhysRegs);
+          continue;
+      }
 
-        while (dep_inst) {
-            DPRINTF(IQ, "Waking up a dependent instruction, [sn:%lli] "
-                    "PC %s.\n", dep_inst->seqNum, dep_inst->pcState());
+      DPRINTF(IQ, "Waking any dependents on register %i.\n",
+              (int) dest_reg);
 
-            // Might want to give more information to the instruction
-            // so that it knows which of its source registers is
-            // ready.  However that would mean that the dependency
-            // graph entries would need to hold the src_reg_idx.
-            dep_inst->markSrcRegReady();
+      //Go through the dependency chain, marking the registers as
+      //ready within the waiting instructions.
+      DynInstPtr dep_inst = dependGraph.pop(dest_reg);
 
-            addIfReady(dep_inst);
+      while (dep_inst) {
+          DPRINTF(IQ, "Waking up a dependent instruction, [sn:%lli] "
+                  "PC %s.\n", dep_inst->seqNum, dep_inst->pcState());
 
-            dep_inst = dependGraph.pop(dest_reg);
+          // Might want to give more information to the instruction
+          // so that it knows which of its source registers is
+          // ready.  However that would mean that the dependency
+          // graph entries would need to hold the src_reg_idx.
+          dep_inst->markSrcRegReady();
 
-            ++dependents;
-        }
+          addIfReady(dep_inst);
 
-        // Reset the head node now that all of its dependents have
-        // been woken up.
-        assert(dependGraph.empty(dest_reg));
-        dependGraph.clearInst(dest_reg);
+          dep_inst = dependGraph.pop(dest_reg);
 
-        // Mark the scoreboard as having that register ready.
-        regScoreboard[dest_reg] = true;
-    }
-    return dependents;
+          ++dependents;
+      }
+
+      // Reset the head node now that all of its dependents have
+      // been woken up.
+      assert(dependGraph.empty(dest_reg));
+      dependGraph.clearInst(dest_reg);
+      // Mark the scoreboard as having that register ready.
+      regScoreboard[dest_reg] = true;
+  }
+}
+  return dependents;
+
 }
 
 template <class Impl>
@@ -1100,8 +1105,10 @@ InstructionQueue<Impl>::completeMemInst(DynInstPtr &completed_inst)
     ++freeEntries;
 
     completed_inst->memOpDone(true);
-
+    /* Group D */
+  if (completed_inst->isRedundant()!=true){
     memDepUnit[tid].completed(completed_inst);
+  }
     count[tid]--;
 }
 
@@ -1400,7 +1407,10 @@ InstructionQueue<Impl>::addIfReady(DynInstPtr &inst)
 
             // Message to the mem dependence unit that this instruction has
             // its registers ready.
-            memDepUnit[inst->threadNumber].regsReady(inst);
+            /* Group D */
+            if (inst->isRedundant()!=true){
+              memDepUnit[inst->threadNumber].regsReady(inst);
+            }
 
             return;
         }

@@ -50,6 +50,7 @@
 
 #include "base/statistics.hh"
 #include "cpu/inst_seq.hh"
+#include "cpu/o3/redundant_object.hh"
 #include "debug/MemDepUnit.hh"
 
 struct SNHash {
@@ -78,7 +79,7 @@ class InstructionQueue;
  * dependence prediction schemes.
  */
 template <class MemDepPred, class Impl>
-class MemDepUnit
+class MemDepUnit : public RedundantObject
 {
   protected:
     std::string _name;
@@ -96,7 +97,7 @@ class MemDepUnit
     ~MemDepUnit();
 
     /** Returns the name of the memory dependence unit. */
-    std::string name() const { return _name; }
+    std::string name() const { return _name + "." + RedundantObject::name(); }
 
     /** Initializes the unit with parameters and a thread id. */
     void init(DerivO3CPUParams *params, ThreadID tid);

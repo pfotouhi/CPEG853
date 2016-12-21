@@ -57,7 +57,7 @@ SimpleRenameMap::init(unsigned size, SimpleFreeList *_freeList,
 }
 
 SimpleRenameMap::RenameInfo
-SimpleRenameMap::rename(RegIndex arch_reg)
+SimpleRenameMap::rename(RegIndex arch_reg, bool redundant)
 {
     PhysRegIndex renamed_reg;
 
@@ -69,8 +69,9 @@ SimpleRenameMap::rename(RegIndex arch_reg)
     // register.
     if (arch_reg != zeroReg) {
         renamed_reg = freeList->getReg();
-
-        map[arch_reg] = renamed_reg;
+        if (!redundant){
+            map[arch_reg] = renamed_reg;
+        }
     } else {
         // Otherwise return the zero register so nothing bad happens.
         assert(prev_reg == zeroReg);
@@ -103,22 +104,22 @@ UnifiedRenameMap::init(PhysRegFile *_regFile,
 
 
 UnifiedRenameMap::RenameInfo
-UnifiedRenameMap::rename(RegIndex arch_reg)
+UnifiedRenameMap::rename(RegIndex arch_reg, bool redundant)
 {
     RegIndex rel_arch_reg;
 
     switch (regIdxToClass(arch_reg, &rel_arch_reg)) {
       case IntRegClass:
-        return renameInt(rel_arch_reg);
+        return renameInt(rel_arch_reg, redundant);
 
       case FloatRegClass:
-        return renameFloat(rel_arch_reg);
+        return renameFloat(rel_arch_reg, redundant);
 
       case CCRegClass:
-        return renameCC(rel_arch_reg);
+        return renameCC(rel_arch_reg, redundant);
 
       case MiscRegClass:
-        return renameMisc(rel_arch_reg);
+        return renameMisc(rel_arch_reg, redundant);
 
       default:
         panic("rename rename(): unknown reg class %s\n",

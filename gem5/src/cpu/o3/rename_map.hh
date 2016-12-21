@@ -120,7 +120,7 @@ class SimpleRenameMap
      * @return A RenameInfo pair indicating both the new and previous
      * physical registers.
      */
-    RenameInfo rename(RegIndex arch_reg);
+    RenameInfo rename(RegIndex arch_reg, bool Redundant);
 
     /**
      * Look up the physical register mapped to an architectural register.
@@ -204,15 +204,17 @@ class UnifiedRenameMap
      * @return A RenameInfo pair indicating both the new and previous
      * physical registers.
      */
-    RenameInfo rename(RegIndex arch_reg);
+    RenameInfo rename(RegIndex arch_reg,bool Redundant);
 
     /**
      * Perform rename() on an integer register, given a relative
      * integer register index.
      */
-    RenameInfo renameInt(RegIndex rel_arch_reg)
+    /* Group D */
+    // add redundant flag to all of the rename functions
+    RenameInfo renameInt(RegIndex rel_arch_reg, bool redundant)
     {
-        RenameInfo info = intMap.rename(rel_arch_reg);
+        RenameInfo info = intMap.rename(rel_arch_reg, redundant);
         assert(regFile->isIntPhysReg(info.first));
         return info;
     }
@@ -221,9 +223,9 @@ class UnifiedRenameMap
      * Perform rename() on a floating-point register, given a relative
      * floating-point register index.
      */
-    RenameInfo renameFloat(RegIndex rel_arch_reg)
+    RenameInfo renameFloat(RegIndex rel_arch_reg, bool redundant)
     {
-        RenameInfo info = floatMap.rename(rel_arch_reg);
+        RenameInfo info = floatMap.rename(rel_arch_reg, redundant);
         assert(regFile->isFloatPhysReg(info.first));
         return info;
     }
@@ -232,9 +234,9 @@ class UnifiedRenameMap
      * Perform rename() on a condition-code register, given a relative
      * condition-code register index.
      */
-    RenameInfo renameCC(RegIndex rel_arch_reg)
+    RenameInfo renameCC(RegIndex rel_arch_reg, bool redundant)
     {
-        RenameInfo info = ccMap.rename(rel_arch_reg);
+        RenameInfo info = ccMap.rename(rel_arch_reg, redundant);
         assert(regFile->isCCPhysReg(info.first));
         return info;
     }
@@ -243,7 +245,7 @@ class UnifiedRenameMap
      * Perform rename() on a misc register, given a relative
      * misc register index.
      */
-    RenameInfo renameMisc(RegIndex rel_arch_reg)
+    RenameInfo renameMisc(RegIndex rel_arch_reg, bool redundant)
     {
         // misc regs aren't really renamed, just remapped
         PhysRegIndex phys_reg = lookupMisc(rel_arch_reg);

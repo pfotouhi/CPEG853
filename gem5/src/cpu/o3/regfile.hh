@@ -42,7 +42,6 @@
 #include "config/the_isa.hh"
 #include "cpu/o3/comm.hh"
 #include "debug/IEW.hh"
-#include "cpu/o3/encoder.hh"
 
 class UnifiedFreeList;
 
@@ -71,7 +70,6 @@ class PhysRegFile
 
     /** Condition-code register file. */
     std::vector<CCReg> ccRegFile;
-    Encoder *encoder;
 
     /**
      * The first floating-point physical register index.  The physical
@@ -105,8 +103,7 @@ class PhysRegFile
      */
     PhysRegFile(unsigned _numPhysicalIntRegs,
                 unsigned _numPhysicalFloatRegs,
-                unsigned _numPhysicalCCRegs,
-                Encoder *encoderPassed);
+                unsigned _numPhysicalCCRegs);
 
     /**
      * Destructor to free resources

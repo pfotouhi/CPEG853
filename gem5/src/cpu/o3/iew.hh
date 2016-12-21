@@ -49,6 +49,7 @@
 #include "base/statistics.hh"
 #include "cpu/o3/comm.hh"
 #include "cpu/o3/lsq.hh"
+#include "cpu/o3/redundant_object.hh"
 #include "cpu/o3/scoreboard.hh"
 #include "cpu/timebuf.hh"
 #include "debug/IEW.hh"
@@ -77,7 +78,7 @@ class FUPool;
  * scoreboard.
  */
 template<class Impl>
-class DefaultIEW
+class DefaultIEW : public RedundantObject
 {
   private:
     //Typedefs from Impl
@@ -134,6 +135,9 @@ class DefaultIEW
   public:
     /** Constructs a DefaultIEW with the given parameters. */
     DefaultIEW(O3CPU *_cpu, DerivO3CPUParams *params);
+
+    /** Group D mod. Constructs a DefaultIEW with the given parameters. */
+    DefaultIEW(O3CPU *_cpu, DerivO3CPUParams *params, bool redundant);
 
     /** Returns the name of the DefaultIEW stage. */
     std::string name() const;

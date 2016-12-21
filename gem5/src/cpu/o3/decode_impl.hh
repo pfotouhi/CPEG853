@@ -175,7 +175,21 @@ DefaultDecode<Impl>::setDecodeQueue(TimeBuffer<DecodeStruct> *dq_ptr)
 
     // Setup wire to write information to proper place in decode queue.
     toRename = decodeQueue->getWire(0);
+
 }
+
+////Group D////
+template<class Impl>
+void
+DefaultDecode<Impl>::setDecodeQueueDup(TimeBuffer<DecodeStruct> *dq_ptr)
+{
+    decodeQueueDup = dq_ptr;
+
+    // Setup wire to write information to proper place in decode queue.
+    toRenameDup = decodeQueueDup->getWire(0);
+
+}
+////Group D////
 
 template<class Impl>
 void
@@ -555,6 +569,9 @@ DefaultDecode<Impl>::tick()
     bool status_change = false;
 
     toRenameIndex = 0;
+    ////Group D////
+    toRenameDupIndex = 0;
+    ////Group D////
 
     list<ThreadID>::iterator threads = activeThreads->begin();
     list<ThreadID>::iterator end = activeThreads->end();
@@ -695,6 +712,14 @@ DefaultDecode<Impl>::decodeInsts(ThreadID tid)
 
         ++(toRename->size);
         ++toRenameIndex;
+
+        ////Group D////
+        inst->initOtherCopy();
+        toRenameDup->insts[toRenameDupIndex] = inst->other;
+        ++(toRenameDup->size);
+        ++toRenameDupIndex;
+        ////Group D////
+
         ++decodeDecodedInsts;
         --insts_available;
 

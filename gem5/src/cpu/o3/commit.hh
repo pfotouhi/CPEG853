@@ -176,6 +176,11 @@ class DefaultCommit
     /** Sets the main time buffer pointer, used for backwards communication. */
     void setTimeBuffer(TimeBuffer<TimeStruct> *tb_ptr);
 
+    /* Group D */
+    void setTimeBufferDup(TimeBuffer<TimeStruct> *tb_ptr);
+    /* Group D */
+
+
     void setFetchQueue(TimeBuffer<FetchStruct> *fq_ptr);
 
     /** Sets the pointer to the queue coming from rename. */
@@ -183,6 +188,10 @@ class DefaultCommit
 
     /** Sets the pointer to the queue coming from IEW. */
     void setIEWQueue(TimeBuffer<IEWStruct> *iq_ptr);
+
+    /* Group D */
+    void setIEWQueueDup(TimeBuffer<IEWStruct> *iq_ptr);
+    /* Group D */
 
     /** Sets the pointer to the IEW stage. */
     void setIEWStage(IEW *iew_stage);
@@ -348,6 +357,9 @@ class DefaultCommit
 
     /** Wire to write information heading to previous stages. */
     typename TimeBuffer<TimeStruct>::wire toIEW;
+    /* Group D */
+    typename TimeBuffer<TimeStruct>::wire toIEWDup;
+    /* Group D */
 
     /** Wire to read information from IEW (for ROB). */
     typename TimeBuffer<TimeStruct>::wire robInfoFromIEW;
@@ -361,6 +373,10 @@ class DefaultCommit
 
     /** Wire to read information from IEW queue. */
     typename TimeBuffer<IEWStruct>::wire fromIEW;
+
+    /* Group D */
+    typename TimeBuffer<IEWStruct>::wire fromIEWDup;
+    /* Group D */
 
     /** Rename instruction queue interface, for ROB. */
     TimeBuffer<RenameStruct> *renameQueue;

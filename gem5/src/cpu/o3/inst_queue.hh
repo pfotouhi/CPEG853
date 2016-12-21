@@ -51,16 +51,15 @@
 
 #include "base/statistics.hh"
 #include "base/types.hh"
-#include "cpu/o3/dep_graph.hh"
 #include "cpu/inst_seq.hh"
+#include "cpu/o3/dep_graph.hh"
+#include "cpu/o3/redundant_object.hh"
 #include "cpu/op_class.hh"
 #include "cpu/timebuf.hh"
 #include "sim/eventq.hh"
-#include "cpu/o3/encoder.hh"
 
 struct DerivO3CPUParams;
 class FUPool;
-class Encoder;
 class MemInterface;
 
 /**
@@ -81,7 +80,7 @@ class MemInterface;
  * @todo: Make IQ able to handle multiple FU pools.
  */
 template <class Impl>
-class InstructionQueue
+class InstructionQueue : public RedundantObject
 {
   public:
     //Typedefs from the Impl.
@@ -125,6 +124,10 @@ class InstructionQueue
 
     /** Constructs an IQ. */
     InstructionQueue(O3CPU *cpu_ptr, IEW *iew_ptr, DerivO3CPUParams *params);
+
+    /** Constructs an IQ. */
+    InstructionQueue(O3CPU *cpu_ptr, IEW *iew_ptr, DerivO3CPUParams *params,
+                     bool redundant);
 
     /** Destructs the IQ. */
     ~InstructionQueue();
@@ -308,8 +311,6 @@ class InstructionQueue
 
     /** Function unit pool. */
     FUPool *fuPool;
-    /** Encoder **/
-    Encoder *encoder;
 
     //////////////////////////////////////
     // Instruction lists, ready queues, and ordering

@@ -31,7 +31,6 @@
 #include <string>
 
 #include "cpu/o3/deriv.hh"
-#include "encoder.hh"
 #include "params/DerivO3CPU.hh"
 
 DerivO3CPU *

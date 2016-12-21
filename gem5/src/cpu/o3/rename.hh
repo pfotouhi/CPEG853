@@ -49,6 +49,7 @@
 
 #include "base/statistics.hh"
 #include "config/the_isa.hh"
+#include "cpu/o3/redundant_object.hh"
 #include "cpu/timebuf.hh"
 #include "sim/probe/probe.hh"
 
@@ -67,7 +68,7 @@ struct DerivO3CPUParams;
  * and there are no instructions in flight to the ROB.
  */
 template<class Impl>
-class DefaultRename
+class DefaultRename : public RedundantObject
 {
   public:
     // Typedefs from the Impl.
@@ -134,6 +135,9 @@ class DefaultRename
   public:
     /** DefaultRename constructor. */
     DefaultRename(O3CPU *_cpu, DerivO3CPUParams *params);
+
+    /** Group D mod DefaultRename constructor. */
+    DefaultRename(O3CPU *_cpu, DerivO3CPUParams *params, bool redundant);
 
     /** Returns the name of rename. */
     std::string name() const;

@@ -308,6 +308,18 @@ DefaultCommit<Impl>::setTimeBuffer(TimeBuffer<TimeStruct> *tb_ptr)
     robInfoFromIEW = timeBuffer->getWire(-iewToCommitDelay);
 }
 
+/* Group D */
+template <class Impl>
+void
+DefaultCommit<Impl>::setTimeBufferDup(TimeBuffer<TimeStruct> *tb_ptr)
+{
+    timeBuffer = tb_ptr;
+
+    // Setup wire to send information back to IEW.
+    toIEWDup = timeBuffer->getWire(0);
+}
+/* Group D */
+
 template <class Impl>
 void
 DefaultCommit<Impl>::setFetchQueue(TimeBuffer<FetchStruct> *fq_ptr)
@@ -337,6 +349,19 @@ DefaultCommit<Impl>::setIEWQueue(TimeBuffer<IEWStruct> *iq_ptr)
     // Setup wire to get instructions from IEW.
     fromIEW = iewQueue->getWire(-iewToCommitDelay);
 }
+
+/* Group D */
+template <class Impl>
+void
+DefaultCommit<Impl>::setIEWQueueDup(TimeBuffer<IEWStruct> *iq_ptr)
+{
+    iewQueue = iq_ptr;
+
+    // Setup wire to get instructions from IEW.
+    fromIEWDup = iewQueue->getWire(-iewToCommitDelay);
+}
+/* Group D */
+
 
 template <class Impl>
 void
@@ -379,6 +404,11 @@ DefaultCommit<Impl>::startupStage()
         toIEW->commitInfo[tid].usedROB = true;
         toIEW->commitInfo[tid].freeROBEntries = rob->numFreeEntries(tid);
         toIEW->commitInfo[tid].emptyROB = true;
+        /* Group D */
+        toIEWDup->commitInfo[tid].usedROB = true;
+        toIEWDup->commitInfo[tid].freeROBEntries = rob->numFreeEntries(tid);
+        toIEWDup->commitInfo[tid].emptyROB = true;
+        /* Group D */
     }
 
     // Commit must broadcast the number of free entries it has at the
@@ -581,6 +611,20 @@ DefaultCommit<Impl>::squashAll(ThreadID tid)
     toIEW->commitInfo[tid].squashInst = NULL;
 
     toIEW->commitInfo[tid].pc = pc[tid];
+
+    /* Group D */
+    toIEWDup->commitInfo[tid].doneSeqNum = squashed_inst;
+
+    toIEWDup->commitInfo[tid].squash = true;
+
+    toIEWDup->commitInfo[tid].robSquashing = true;
+
+    toIEWDup->commitInfo[tid].mispredictInst = NULL;
+    toIEWDup->commitInfo[tid].squashInst = NULL;
+
+    toIEWDup->commitInfo[tid].pc = pc[tid];
+    /* Group D */
+
 }
 
 template <class Impl>
@@ -630,6 +674,10 @@ DefaultCommit<Impl>::squashFromSquashAfter(ThreadID tid)
     // the squash. It'll try to re-fetch an instruction executing in
     // microcode unless this is set.
     toIEW->commitInfo[tid].squashInst = squashAfterInst[tid];
+    /* Group D */
+    toIEWDup->commitInfo[tid].squashInst = squashAfterInst[tid];
+    /* Group D */
+
     squashAfterInst[tid] = NULL;
 
     commitStatus[tid] = ROBSquashing;
@@ -679,6 +727,9 @@ DefaultCommit<Impl>::tick()
                         " insts this cycle.\n", tid);
                 rob->doSquash(tid);
                 toIEW->commitInfo[tid].robSquashing = true;
+                /* Group D */
+                toIEWDup->commitInfo[tid].robSquashing = true;
+                /* Group D */
                 wroteToTimeBuffer = true;
             }
         }
@@ -736,6 +787,9 @@ DefaultCommit<Impl>::handleInterrupt()
         DPRINTF(Commit, "Pending interrupt is cleared by master before "
                 "it got handled. Restart fetching from the orig path.\n");
         toIEW->commitInfo[0].clearInterrupt = true;
+        /* Group D */
+        toIEWDup->commitInfo[0].clearInterrupt = true;
+        /* Group D */
         interrupt = NoFault;
         avoidQuiesceLiveLock = true;
         return;
@@ -750,6 +804,9 @@ DefaultCommit<Impl>::handleInterrupt()
 
         // Clear the interrupt now that it's going to be handled
         toIEW->commitInfo[0].clearInterrupt = true;
+        /* Group D */
+        toIEWDup->commitInfo[0].clearInterrupt = true;
+        /* Group D */
 
         assert(!thread[0]->noSquashFromTC);
         thread[0]->noSquashFromTC = true;
@@ -803,6 +860,9 @@ DefaultCommit<Impl>::propagateInterrupt()
     // at which point it stops fetching instructions.
     if (interrupt != NoFault)
         toIEW->commitInfo[0].interruptPending = true;
+        /* Group D */
+        toIEWDup->commitInfo[0].interruptPending = true;
+        /* Group D */
 }
 
 template <class Impl>
@@ -903,6 +963,32 @@ DefaultCommit<Impl>::commit()
             }
 
             toIEW->commitInfo[tid].pc = fromIEW->pc[tid];
+
+
+            /* Group D */
+            toIEWDup->commitInfo[tid].doneSeqNum = squashed_inst;
+
+            toIEWDup->commitInfo[tid].squash = true;
+
+            // Send back the rob squashing signal so other stages know that
+            // the ROB is in the process of squashing.
+            toIEWDup->commitInfo[tid].robSquashing = true;
+
+            toIEWDup->commitInfo[tid].mispredictInst =
+                fromIEW->mispredictInst[tid];
+            toIEWDup->commitInfo[tid].branchTaken =
+                fromIEW->branchTaken[tid];
+            toIEWDup->commitInfo[tid].squashInst =
+                                    rob->findInst(tid, squashed_inst);
+            if (toIEWDup->commitInfo[tid].mispredictInst) {
+                if (toIEWDup->commitInfo[tid].mispredictInst->isUncondCtrl()) {
+                     toIEWDup->commitInfo[tid].branchTaken = true;
+                }
+                ++branchMispredicts;
+            }
+
+            toIEWDup->commitInfo[tid].pc = fromIEW->pc[tid];
+            /* Group D */
         }
 
         if (commitStatus[tid] == ROBSquashing) {
@@ -933,7 +1019,10 @@ DefaultCommit<Impl>::commit()
         if (changedROBNumEntries[tid]) {
             toIEW->commitInfo[tid].usedROB = true;
             toIEW->commitInfo[tid].freeROBEntries = rob->numFreeEntries(tid);
-
+          /* Group D */
+          toIEWDup->commitInfo[tid].usedROB = true;
+          toIEWDup->commitInfo[tid].freeROBEntries = rob->numFreeEntries(tid);
+          /* Group D */
             wroteToTimeBuffer = true;
             changedROBNumEntries[tid] = false;
             if (rob->isEmpty(tid))
@@ -954,6 +1043,11 @@ DefaultCommit<Impl>::commit()
             toIEW->commitInfo[tid].usedROB = true;
             toIEW->commitInfo[tid].emptyROB = true;
             toIEW->commitInfo[tid].freeROBEntries = rob->numFreeEntries(tid);
+          /* Group D */
+          toIEWDup->commitInfo[tid].usedROB = true;
+          toIEWDup->commitInfo[tid].emptyROB = true;
+          toIEWDup->commitInfo[tid].freeROBEntries = rob->numFreeEntries(tid);
+          /* Group D */
             wroteToTimeBuffer = true;
         }
 
@@ -1038,6 +1132,9 @@ DefaultCommit<Impl>::commitInsts()
 
                 // Set the doneSeqNum to the youngest committed instruction.
                 toIEW->commitInfo[tid].doneSeqNum = head_inst->seqNum;
+                /* Group D */
+                toIEWDup->commitInfo[tid].doneSeqNum = head_inst->seqNum;
+                /* Group D */
 
                 if (tid == 0) {
                     canHandleInterrupts =  (!head_inst->isDelayedCommit()) &&
@@ -1160,6 +1257,9 @@ DefaultCommit<Impl>::commitHead(DynInstPtr &head_inst, unsigned inst_num)
         }
 
         toIEW->commitInfo[tid].nonSpecSeqNum = head_inst->seqNum;
+        /* Group D */
+        toIEWDup->commitInfo[tid].nonSpecSeqNum = head_inst->seqNum;
+        /* Group D */
 
         // Change the instruction so it won't try to commit again until
         // it is executed.
@@ -1170,6 +1270,10 @@ DefaultCommit<Impl>::commitHead(DynInstPtr &head_inst, unsigned inst_num)
                     head_inst->seqNum, head_inst->pcState());
             toIEW->commitInfo[tid].strictlyOrdered = true;
             toIEW->commitInfo[tid].strictlyOrderedLoad = head_inst;
+            /* Group D */
+            toIEWDup->commitInfo[tid].strictlyOrdered = true;
+            toIEWDup->commitInfo[tid].strictlyOrderedLoad = head_inst;
+            /* Group D */
         } else {
             ++commitNonSpecStalls;
         }

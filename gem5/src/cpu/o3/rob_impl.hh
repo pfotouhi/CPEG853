@@ -286,7 +286,14 @@ ROB<Impl>::isHeadReady(ThreadID tid)
 {
     robReads++;
     if (threadEntries[tid] != 0) {
-        return instList[tid].front()->readyToCommit();
+        DynInstPtr front = instList[tid].front();
+        if (front->other!=NULL){
+            return front->readyToCommit() && front->other->readyToCommit()
+                   & front->verify();
+        }
+        else {
+                return front->readyToCommit();
+        }
     }
 
     return false;

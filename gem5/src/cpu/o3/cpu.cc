@@ -79,8 +79,6 @@ using namespace std;
 BaseO3CPU::BaseO3CPU(BaseCPUParams *params)
     : BaseCPU(params)
 {
-    printf("my parameter: %i\n", params->test_Flag);
-
 }
 
 void
@@ -168,13 +166,18 @@ FullO3CPU<Impl>::FullO3CPU(DerivO3CPUParams *params)
       fetch(this, params),
       decode(this, params),
       rename(this, params),
+      /* Group D */
+      renameDup(this, params, true),
+      /* Group D */
       iew(this, params),
+      /* Group D */
+      iewDup(this, params, true),
+      /* Group D */
       commit(this, params),
 
       regFile(params->numPhysIntRegs,
               params->numPhysFloatRegs,
-              params->numPhysCCRegs,
-              params->encoder),
+              params->numPhysCCRegs),
 
       freeList(name() + ".freelist", &regFile),
 
@@ -190,10 +193,23 @@ FullO3CPU<Impl>::FullO3CPU(DerivO3CPUParams *params)
       dcachePort(&iew.ldstQueue, this),
 
       timeBuffer(params->backComSize, params->forwardComSize),
+
+      /* Group D */
+       timeBufferDup(params->backComSize, params->forwardComSize),
+      /* Group D */
+
       fetchQueue(params->backComSize, params->forwardComSize),
       decodeQueue(params->backComSize, params->forwardComSize),
       renameQueue(params->backComSize, params->forwardComSize),
+      /* Group D */
+      decodeQueueDup(params->backComSize, params->forwardComSize),
+      renameQueueDup(params->backComSize, params->forwardComSize),
+      /* Group D */
       iewQueue(params->backComSize, params->forwardComSize),
+
+      /* Group D */
+      iewQueueDup(params->backComSize, params->forwardComSize),
+      /* Group D */
       activityRec(name(), NumStages,
                   params->backComSize + params->forwardComSize,
                   params->activity),
@@ -231,6 +247,10 @@ FullO3CPU<Impl>::FullO3CPU(DerivO3CPUParams *params)
     decode.setActiveThreads(&activeThreads);
     rename.setActiveThreads(&activeThreads);
     iew.setActiveThreads(&activeThreads);
+    /* Group D */
+    renameDup.setActiveThreads(&activeThreads);
+    iewDup.setActiveThreads(&activeThreads);
+    /* Group D */
     commit.setActiveThreads(&activeThreads);
 
     // Give each of the stages the time buffer they will use.
@@ -238,7 +258,17 @@ FullO3CPU<Impl>::FullO3CPU(DerivO3CPUParams *params)
     decode.setTimeBuffer(&timeBuffer);
     rename.setTimeBuffer(&timeBuffer);
     iew.setTimeBuffer(&timeBuffer);
+    /* Group D */
+    renameDup.setTimeBuffer(&timeBufferDup);
+    iewDup.setTimeBuffer(&timeBufferDup);
+    //renameDup.setTimeBuffer(&timeBuffer);
+    //iewDup.setTimeBuffer(&timeBuffer);
+    /* Group D */
+
     commit.setTimeBuffer(&timeBuffer);
+    /* Group D */
+    commit.setTimeBufferDup(&timeBufferDup);
+    /* Group D */
 
     // Also setup each of the stages' queues.
     fetch.setFetchQueue(&fetchQueue);
@@ -255,6 +285,17 @@ FullO3CPU<Impl>::FullO3CPU(DerivO3CPUParams *params)
     commit.setIEWStage(&iew);
     rename.setIEWStage(&iew);
     rename.setCommitStage(&commit);
+
+    /* Group D */
+    commit.setIEWQueueDup(&iewQueueDup);
+    decode.setDecodeQueueDup(&decodeQueueDup);
+    renameDup.setDecodeQueue(&decodeQueueDup);
+    renameDup.setRenameQueue(&renameQueueDup);
+    iewDup.setRenameQueue(&renameQueueDup);
+    iewDup.setIEWQueue(&iewQueueDup);
+    renameDup.setIEWStage(&iewDup);
+    renameDup.setCommitStage(&commit);
+    /* Group D */
 
     ThreadID active_threads;
     if (FullSystem) {
@@ -275,7 +316,13 @@ FullO3CPU<Impl>::FullO3CPU(DerivO3CPUParams *params)
     assert(params->numPhysCCRegs >= numThreads * TheISA::NumCCRegs);
 
     rename.setScoreboard(&scoreboard);
+    /* Group D */
+    renameDup.setScoreboard(&scoreboard);
+    iewDup.setScoreboard(&scoreboard);
+    /* Group D */
+
     iew.setScoreboard(&scoreboard);
+
 
     // Setup the rename map for whichever stages need it.
     for (ThreadID tid = 0; tid < numThreads; tid++) {
@@ -293,6 +340,10 @@ FullO3CPU<Impl>::FullO3CPU(DerivO3CPUParams *params)
 
         renameMap[tid].init(&regFile, TheISA::ZeroReg, fpZeroReg,
                             &freeList);
+        /* Group D */
+        //renameMapDup[tid].init(&regFile, TheISA::ZeroReg, fpZeroReg,
+                                                //&freeList);
+        /* Group D */
     }
 
     // Initialize rename map to assign physical registers to the
@@ -303,18 +354,27 @@ FullO3CPU<Impl>::FullO3CPU(DerivO3CPUParams *params)
             // want special treatment for the zero register at this point
             PhysRegIndex phys_reg = freeList.getIntReg();
             renameMap[tid].setIntEntry(ridx, phys_reg);
+            /* Group D */
+            //renameMapDup[tid].setIntEntry(ridx, phys_reg);
+            /* Group D */
             commitRenameMap[tid].setIntEntry(ridx, phys_reg);
         }
 
         for (RegIndex ridx = 0; ridx < TheISA::NumFloatRegs; ++ridx) {
             PhysRegIndex phys_reg = freeList.getFloatReg();
             renameMap[tid].setFloatEntry(ridx, phys_reg);
+            /* Group D */
+            //renameMapDup[tid].setFloatEntry(ridx, phys_reg);
+            /* Group D */
             commitRenameMap[tid].setFloatEntry(ridx, phys_reg);
         }
 
         for (RegIndex ridx = 0; ridx < TheISA::NumCCRegs; ++ridx) {
             PhysRegIndex phys_reg = freeList.getCCReg();
             renameMap[tid].setCCEntry(ridx, phys_reg);
+            /* Group D */
+            renameMap[tid].setCCEntry(ridx, phys_reg);
+            /* Group D */
             commitRenameMap[tid].setCCEntry(ridx, phys_reg);
         }
     }
@@ -322,6 +382,11 @@ FullO3CPU<Impl>::FullO3CPU(DerivO3CPUParams *params)
     rename.setRenameMap(renameMap);
     commit.setRenameMap(commitRenameMap);
     rename.setFreeList(&freeList);
+    /* Group D */
+    //renameDup.setRenameMap(renameMapDup);
+    renameDup.setRenameMap(renameMap);
+    renameDup.setFreeList(&freeList);
+    /* Group D */
 
     // Setup the ROB for whichever stages need it.
     commit.setROB(&rob);
@@ -419,6 +484,10 @@ FullO3CPU<Impl>::regProbePoints()
 
     fetch.regProbePoints();
     rename.regProbePoints();
+    /* Group D */
+    renameDup.regProbePoints();
+    iewDup.regProbePoints();
+    /* Group D */
     iew.regProbePoints();
     commit.regProbePoints();
 }
@@ -491,6 +560,10 @@ FullO3CPU<Impl>::regStats()
     this->fetch.regStats();
     this->decode.regStats();
     this->rename.regStats();
+    /* Group D */
+    this->renameDup.regStats();
+    this->iewDup.regStats();
+    /* Group D */
     this->iew.regStats();
     this->commit.regStats();
     this->rob.regStats();
@@ -556,17 +629,41 @@ FullO3CPU<Impl>::tick()
 
     rename.tick();
 
+    /* Group D */
+    renameDup.tick();
+    /* Group D */
+
     iew.tick();
+    /* Group D */
+    iewDup.tick();
+    /* Group D */
 
     commit.tick();
 
     // Now advance the time buffers
     timeBuffer.advance();
+    /* Group D */
+    timeBufferDup.advance();
+    /* Group D */
+
 
     fetchQueue.advance();
     decodeQueue.advance();
+    /* Group D */
+    decodeQueueDup.advance();
+    /* Group D */
+
     renameQueue.advance();
+
+    /* Group D */
+    renameQueueDup.advance();
+    /* Group D */
+
     iewQueue.advance();
+
+    /* Group D */
+    iewQueueDup.advance();
+    /* Group D */
 
     activityRec.advance();
 
@@ -635,6 +732,10 @@ FullO3CPU<Impl>::startup()
     decode.startupStage();
     iew.startupStage();
     rename.startupStage();
+    /* Group D */
+    renameDup.startupStage();
+    iewDup.startupStage();
+    /* Group D */
     commit.startupStage();
 }
 
@@ -793,6 +894,9 @@ FullO3CPU<Impl>::insertThread(ThreadID tid)
         PhysRegIndex phys_reg = freeList.getIntReg();
 
         renameMap[tid].setEntry(ireg,phys_reg);
+        /* Group D */
+        //renameMapDup[tid].setEntry(ireg,phys_reg);
+        /* Group D */
         scoreboard.setReg(phys_reg);
     }
 
@@ -802,6 +906,9 @@ FullO3CPU<Impl>::insertThread(ThreadID tid)
         PhysRegIndex phys_reg = freeList.getFloatReg();
 
         renameMap[tid].setEntry(freg,phys_reg);
+        /* Group D */
+        //renameMapDup[tid].setEntry(freg,phys_reg);
+        /* Group D */
         scoreboard.setReg(phys_reg);
     }
 
@@ -812,6 +919,9 @@ FullO3CPU<Impl>::insertThread(ThreadID tid)
         PhysRegIndex phys_reg = freeList.getCCReg();
 
         renameMap[tid].setEntry(creg,phys_reg);
+        /* Group D */
+        //renameMapDup[tid].setEntry(creg,phys_reg);
+        /* Group D */
         scoreboard.setReg(phys_reg);
     }
 
@@ -850,6 +960,11 @@ FullO3CPU<Impl>::removeThread(ThreadID tid)
         PhysRegIndex phys_reg = renameMap[tid].lookup(ireg);
         scoreboard.unsetReg(phys_reg);
         freeList.addReg(phys_reg);
+        /* Group D */
+        /*phys_reg = renameMapDup[tid].lookup(ireg);
+        scoreboard.unsetReg(phys_reg);
+        freeList.addReg(phys_reg);*/
+        /* Group D */
     }
 
     // Unbind Float Regs from Rename Map
@@ -858,6 +973,11 @@ FullO3CPU<Impl>::removeThread(ThreadID tid)
         PhysRegIndex phys_reg = renameMap[tid].lookup(freg);
         scoreboard.unsetReg(phys_reg);
         freeList.addReg(phys_reg);
+        /* Group D */
+        /*phys_reg = renameMapDup[tid].lookup(freg);
+        scoreboard.unsetReg(phys_reg);
+        freeList.addReg(phys_reg);*/
+        /* Group D */
     }
 
     // Unbind condition-code Regs from Rename Map
@@ -866,6 +986,11 @@ FullO3CPU<Impl>::removeThread(ThreadID tid)
         PhysRegIndex phys_reg = renameMap[tid].lookup(creg);
         scoreboard.unsetReg(phys_reg);
         freeList.addReg(phys_reg);
+        /* Group D */
+        /*phys_reg = renameMapDup[tid].lookup(creg);
+        scoreboard.unsetReg(phys_reg);
+        freeList.addReg(phys_reg);*/
+        /* Group D */
     }
 
     // Squash Throughout Pipeline
@@ -875,6 +1000,11 @@ FullO3CPU<Impl>::removeThread(ThreadID tid)
     decode.squash(tid);
     rename.squash(squash_seq_num, tid);
     iew.squash(tid);
+    /* Group D */
+    renameDup.squash(squash_seq_num, tid);
+    iewDup.squash(tid);
+    iewDup.ldstQueue.squash(squash_seq_num, tid);
+    /* Group D */
     iew.ldstQueue.squash(squash_seq_num, tid);
     commit.rob->squash(squash_seq_num, tid);
 
@@ -1046,8 +1176,22 @@ FullO3CPU<Impl>::drain()
             fetchQueue.advance();
             decodeQueue.advance();
             renameQueue.advance();
+            /* Group D
+            decodeQueueDup.advance();
+            renameQueueDup.advance();
+            iewQueueDup.advance();
+             Group D */
             iewQueue.advance();
         }
+
+        /* Group D*/
+        for (int i = 0; i < timeBufferDup.getSize(); ++i) {
+            timeBufferDup.advance();
+            decodeQueueDup.advance();
+            renameQueueDup.advance();
+            iewQueueDup.advance();
+        }
+        /* Group D */
 
         drainSanityCheck();
         return DrainState::Drained;
@@ -1079,6 +1223,10 @@ FullO3CPU<Impl>::drainSanityCheck() const
     decode.drainSanityCheck();
     rename.drainSanityCheck();
     iew.drainSanityCheck();
+    /* Group D */
+    renameDup.drainSanityCheck();
+    iewDup.drainSanityCheck();
+    /* Group D */
     commit.drainSanityCheck();
 }
 
@@ -1107,6 +1255,17 @@ FullO3CPU<Impl>::isDrained() const
         DPRINTF(Drain, "Rename not drained.\n");
         drained = false;
     }
+
+    /* Group D */
+    if (!renameDup.isDrained()) {
+        DPRINTF(Drain, "RenameDup not drained.\n");
+        drained = false;
+    }
+    if (!iewDup.isDrained()) {
+        DPRINTF(Drain, "IEWDup not drained.\n");
+        drained = false;
+    }
+    /* Group D */
 
     if (!iew.isDrained()) {
         DPRINTF(Drain, "IEW not drained.\n");
@@ -1180,6 +1339,10 @@ FullO3CPU<Impl>::takeOverFrom(BaseCPU *oldCPU)
     decode.takeOverFrom();
     rename.takeOverFrom();
     iew.takeOverFrom();
+    /* Group D */
+    renameDup.takeOverFrom();
+    iewDup.takeOverFrom();
+    /* Group D */
     commit.takeOverFrom();
 
     assert(!tickEvent.scheduled());

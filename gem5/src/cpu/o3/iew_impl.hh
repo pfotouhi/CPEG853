@@ -65,10 +65,11 @@
 using namespace std;
 
 template<class Impl>
-DefaultIEW<Impl>::DefaultIEW(O3CPU *_cpu, DerivO3CPUParams *params)
+DefaultIEW<Impl>::DefaultIEW(O3CPU *_cpu, DerivO3CPUParams *params,
+                             bool redundant)
     : issueToExecQueue(params->backComSize, params->forwardComSize),
       cpu(_cpu),
-      instQueue(_cpu, this, params),
+      instQueue(_cpu, this, params, redundant),
       ldstQueue(_cpu, this, params),
       fuPool(params->fuPool),
       commitToIEWDelay(params->commitToIEWDelay),
@@ -79,6 +80,7 @@ DefaultIEW<Impl>::DefaultIEW(O3CPU *_cpu, DerivO3CPUParams *params)
       wbWidth(params->wbWidth),
       numThreads(params->numThreads)
 {
+    this->setRedundant(redundant);
     if (dispatchWidth > Impl::MaxWidth)
         fatal("dispatchWidth (%d) is larger than compiled limit (%d),\n"
              "\tincrease MaxWidth in src/cpu/o3/impl.hh\n",
@@ -112,11 +114,18 @@ DefaultIEW<Impl>::DefaultIEW(O3CPU *_cpu, DerivO3CPUParams *params)
     skidBufferMax = (renameToIEWDelay + 1) * params->renameWidth;
 }
 
+template<class Impl>
+DefaultIEW<Impl>::DefaultIEW(O3CPU *_cpu, DerivO3CPUParams *params)
+    : DefaultIEW(_cpu,params,false)
+{
+}
+
 template <class Impl>
 std::string
 DefaultIEW<Impl>::name() const
 {
-    return cpu->name() + ".iew";
+    //Group D mod. Used to avoid stat naming conflicts
+    return cpu->name() + ".iew." + RedundantObject::name();
 }
 
 template <class Impl>

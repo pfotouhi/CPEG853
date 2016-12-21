@@ -60,7 +60,8 @@
 using namespace std;
 
 template <class Impl>
-DefaultRename<Impl>::DefaultRename(O3CPU *_cpu, DerivO3CPUParams *params)
+DefaultRename<Impl>::DefaultRename(O3CPU *_cpu, DerivO3CPUParams *params,
+                                   bool redundant)
     : cpu(_cpu),
       iewToRenameDelay(params->iewToRenameDelay),
       decodeToRenameDelay(params->decodeToRenameDelay),
@@ -71,6 +72,7 @@ DefaultRename<Impl>::DefaultRename(O3CPU *_cpu, DerivO3CPUParams *params)
       maxPhysicalRegs(params->numPhysIntRegs + params->numPhysFloatRegs
                       + params->numPhysCCRegs)
 {
+    this->setRedundant(redundant);
     if (renameWidth > Impl::MaxWidth)
         fatal("renameWidth (%d) is larger than compiled limit (%d),\n"
              "\tincrease MaxWidth in src/cpu/o3/impl.hh\n",
@@ -81,10 +83,17 @@ DefaultRename<Impl>::DefaultRename(O3CPU *_cpu, DerivO3CPUParams *params)
 }
 
 template <class Impl>
+DefaultRename<Impl>::DefaultRename(O3CPU *_cpu, DerivO3CPUParams *params)
+    : DefaultRename(_cpu,params,false)
+{
+}
+
+template <class Impl>
 std::string
 DefaultRename<Impl>::name() const
 {
-    return cpu->name() + ".rename";
+    //Group D mod. Used to avoid stat naming conflicts
+    return cpu->name() + ".rename." + RedundantObject::name();
 }
 
 template <class Impl>
@@ -434,14 +443,20 @@ DefaultRename<Impl>::tick()
     }
 
     // @todo: make into updateProgress function
-    for (ThreadID tid = 0; tid < numThreads; tid++) {
-        instsInProgress[tid] -= fromIEW->iewInfo[tid].dispatched;
-        loadsInProgress[tid] -= fromIEW->iewInfo[tid].dispatchedToLQ;
-        storesInProgress[tid] -= fromIEW->iewInfo[tid].dispatchedToSQ;
-        assert(loadsInProgress[tid] >= 0);
-        assert(storesInProgress[tid] >= 0);
-        assert(instsInProgress[tid] >=0);
+    /* Goup D */
+    //Only do the book keeping for the non-redundant stages
+    if (!(RedundantObject::isRedundant())){
+      for (ThreadID tid = 0; tid < numThreads; tid++) {
+          instsInProgress[tid] -= fromIEW->iewInfo[tid].dispatched;
+          loadsInProgress[tid] -= fromIEW->iewInfo[tid].dispatchedToLQ;
+          storesInProgress[tid] -= fromIEW->iewInfo[tid].dispatchedToSQ;
+          assert(loadsInProgress[tid] >= 0);
+          assert(storesInProgress[tid] >= 0);
+          assert(instsInProgress[tid] >=0);
+      }
+
     }
+
 
 }
 
@@ -699,8 +714,31 @@ DefaultRename<Impl>::renameInsts(ThreadID tid)
         renameSrcRegs(inst, inst->threadNumber);
 
         renameDestRegs(inst, inst->threadNumber);
+        /* Goup D */
+        //Only do the book keeping for the non-redundant stages
+        if (!(RedundantObject::isRedundant())){
+          if (inst->isLoad()) {
+                  loadsInProgress[tid]++;
+          }
+          if (inst->isStore()) {
+                  storesInProgress[tid]++;
+          }
+          ++renamed_insts;
+          // Notify potential listeners that source and destination
+          //registers for
+          // this instruction have been renamed.
+          ppRename->notify(inst);
+        }
+        // Put instruction in rename queue.
+        toIEW->insts[toIEWIndex] = inst;
+        ++(toIEW->size);
 
-        if (inst->isLoad()) {
+        // Increment which instruction we're on.
+        ++toIEWIndex;
+
+        // Decrement how many instructions are available.
+        --insts_available;
+        /*if (inst->isLoad()) {
                 loadsInProgress[tid]++;
         }
         if (inst->isStore()) {
@@ -719,7 +757,7 @@ DefaultRename<Impl>::renameInsts(ThreadID tid)
         ++toIEWIndex;
 
         // Decrement how many instructions are available.
-        --insts_available;
+        --insts_available;*/
     }
 
     instsInProgress[tid] += renamed_insts;
@@ -992,6 +1030,9 @@ DefaultRename<Impl>::removeFromHistory(InstSeqNum inst_seq_num, ThreadID tid)
         // the old one.
         if (hb_it->newPhysReg != hb_it->prevPhysReg) {
             freeList->addReg(hb_it->prevPhysReg);
+            if (isRedundant()){
+                freeList->addReg(hb_it->newPhysReg);
+            }
         }
 
         ++renameCommittedMaps;
@@ -1080,30 +1121,42 @@ DefaultRename<Impl>::renameDestRegs(DynInstPtr &inst, ThreadID tid)
         RegIndex flat_rel_dest_reg;
         RegIndex flat_uni_dest_reg;
         typename RenameMap::RenameInfo rename_result;
+        /* Group D */
+        bool ifRedundant = RedundantObject::isRedundant();
+        /* Group D */
 
         switch (regIdxToClass(dest_reg, &rel_dest_reg)) {
           case IntRegClass:
             flat_rel_dest_reg = tc->flattenIntIndex(rel_dest_reg);
-            rename_result = map->renameInt(flat_rel_dest_reg);
+            /* Group D*/
+            rename_result = map->renameInt(flat_rel_dest_reg, ifRedundant);
+            /* Group D*/
             flat_uni_dest_reg = flat_rel_dest_reg;  // 1:1 mapping
             break;
 
           case FloatRegClass:
             flat_rel_dest_reg = tc->flattenFloatIndex(rel_dest_reg);
-            rename_result = map->renameFloat(flat_rel_dest_reg);
+            /* Group D*/
+            rename_result = map->renameFloat(flat_rel_dest_reg,  ifRedundant);
+            /* Group D*/
             flat_uni_dest_reg = flat_rel_dest_reg + TheISA::FP_Reg_Base;
             break;
 
           case CCRegClass:
             flat_rel_dest_reg = tc->flattenCCIndex(rel_dest_reg);
-            rename_result = map->renameCC(flat_rel_dest_reg);
+            /* Group D*/
+            rename_result = map->renameCC(flat_rel_dest_reg, ifRedundant);
+            /* Group D*/
             flat_uni_dest_reg = flat_rel_dest_reg + TheISA::CC_Reg_Base;
             break;
 
           case MiscRegClass:
             // misc regs don't get flattened
             flat_rel_dest_reg = rel_dest_reg;
-            rename_result = map->renameMisc(flat_rel_dest_reg);
+            /* Group D */
+
+            rename_result = map->renameMisc(flat_rel_dest_reg, ifRedundant);
+            /* Group D */
             flat_uni_dest_reg = flat_rel_dest_reg + TheISA::Misc_Reg_Base;
             break;
 
